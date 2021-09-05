@@ -15,20 +15,30 @@ namespace RegisterParcelsFromPC
     {
         string connStr = @"Server=.\SQLEXPRESS;Initial Catalog=parcels;UID=sa;PWD=kumano";
         int ryoseiTable_block = 1;
-  
+        int staff_uid=0;
+        string staff_ryosei_name="", staff_ryosei_room="";
 
 
+        Color color_register = Color.FromArgb(218, 255, 245);
+        Color color_release = Color.FromArgb(217, 255, 218);
+        Color color_delete = Color.FromArgb(255, 216, 216);
 
         public Form1()
         {
             InitializeComponent();
- 
+            dataGridView1.RowTemplate.Height = 60;
+            dataGridView2.RowTemplate.Height = 60;
 
         }
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            ShowCellInformation(sender, e, "CellContentClick");
+            ShowCellInformation(sender, e, "left_side");
+        }
+
+        private void dataGridView2_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            ShowCellInformation(sender, e, "right_top_side");
         }
 
         void ShowCellInformation(object sender, DataGridViewCellEventArgs args, string boxTitle)
@@ -43,31 +53,38 @@ namespace RegisterParcelsFromPC
 
                 //
                 // クリックがヘッダー部分などの場合はインデックスが-1となります。
-                //現状はcol 0:部屋番号、1:氏名、2:荷物数、3:登録、4:受取
-                //
-                DialogResult result;
-                if (row >= 0 && col >=0&col<=2)
+                //ryosei table col 0:部屋番号、1:氏名、2:荷物数、3:登録、4:受取、5:slack_id, 6:ryosei_uid
+                //event table  col 0:イベント種類、1:uid、2:部屋番号, 3:氏名、4:時刻、5:note、6:parcel_uid,7:ryosei_uid,8:is_finished
+                if (row >= 0 && col == 1 && boxTitle == "left_side")//登録
                 {
-                    result =MessageBox.Show(string.Format("行：{0}, 列：{1}, 値：{2}", row, col, g[col, row].Value), boxTitle, MessageBoxButtons.OK);
+                    change_staff(int.Parse(g[6, row].Value.ToString()), g[0, row].Value.ToString(), g[1, row].Value.ToString());
                 }
-                if (row >= 0 && col ==3)//登録
+                if (row >= 0 && col == 3&& boxTitle=="left_side")//登録
                 {
-                    result = MessageBox.Show(g[1, row].Value+"さんの荷物を登録します。", boxTitle, MessageBoxButtons.OKCancel);
-                    if (col == 3 && result == DialogResult.OK)
+
+                    register(int.Parse(g[6, row].Value.ToString()),staff_uid,g[1, row].Value.ToString(), g[0, row].Value.ToString(), g[5, row].Value.ToString());
+                    
+                }
+                if (row >= 0 && col == 4&& boxTitle == "left_side"&& int.Parse(g[2, row].Value.ToString())>0)//受取
+                {
+                    release(int.Parse(g[6, row].Value.ToString()),staff_uid, g[1, row].Value.ToString(), g[0, row].Value.ToString());
+                    //result = MessageBox.Show(string.Format("行：{0}, 列：{1}, 値：{2}", row, col, g[col, row].Value), boxTitle, MessageBoxButtons.OKCancel);
+                }
+                if (row >= 0 && col >=0 &&boxTitle == "right_top_side")
+                {
+                    string test = g[8, row].Value.ToString();
+                        if (g[8, row].Value.ToString() != "True" &&  g[0, row].Value.ToString() != "その他")//既に受け取られた登録イベントは削除できない/事務当登録イベントは削除できない
                     {
-                        register(1, g[1, row].Value.ToString(), g[0, row].Value.ToString(),1);
+                        confirm(g[1, row].Value.ToString(), g[7, row].Value.ToString(), g[6, row].Value.ToString(), g[2, row].Value.ToString(), g[3, row].Value.ToString());
+
                     }
                 }
-                if (row >= 0 && col == 4)//受取
-                {
-                    result = MessageBox.Show(string.Format("行：{0}, 列：{1}, 値：{2}", row, col, g[col, row].Value), boxTitle, MessageBoxButtons.OKCancel);
-                }
 
 
-                
             }
 
         }
+
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -80,12 +97,27 @@ namespace RegisterParcelsFromPC
             using (var conn = new SqlConnection(connStr))
             {
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT [room_name] as '部屋番号',[ryosei_name] as '氏名',[parcels_current_count] as '荷物数', '登録' as '登録','受取' as '受取' FROM [parcels].[dbo].[ryosei] where block_id='" + ryoseiTable_block+"'";
+                MakeSQLCommand sqlstr = new MakeSQLCommand();
+                sqlstr.block_id = ryoseiTable_block;
+                cmd.CommandText = sqlstr.forShow_ryosei_table();
                 var sda = new SqlDataAdapter(cmd);
                 sda.Fill(dt);
             }
             dataGridView1.DataSource = dt;
             //dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            //dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+            dataGridView1.RowTemplate.Height = 60;
+            this.dataGridView1.Columns["slack_id"].Visible = false;
+            this.dataGridView1.Columns["uid"].Visible = false;
+
+            //各行に色を付ける処理
+            //dataGridView2.Rows.Countとやると、常に51になる？？
+            //よくわからんがバグの温床っぽい
+            dataGridView1.Columns[3].DefaultCellStyle.BackColor = color_register;
+            dataGridView1.Columns[4].DefaultCellStyle.BackColor = color_release;
+            this.dataGridView1.CurrentCell = null;
+
+
         }
         void show_parcels_eventTable()
         {
@@ -93,96 +125,214 @@ namespace RegisterParcelsFromPC
             using (var conn = new SqlConnection(connStr))
             {
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT top(50) case [event_type] when 1 then '登録' when 2 then '受取' else 'その他' end  as '操作種類',  [room_name] as '部屋番号',[ryosei_name] as '氏名　　　',[created_at] as '操作時刻',[note] as '特記事項', parcel_uid from parcel_event order by created_at desc";
+                MakeSQLCommand sqlstr = new MakeSQLCommand();
+                cmd.CommandText = sqlstr.forShow_event_table();
                 var sda = new SqlDataAdapter(cmd);
                 sda.Fill(dt);
             }
             dataGridView2.DataSource = dt;
             this.dataGridView2.Columns["操作時刻"].DefaultCellStyle.Format = "MM/dd HH:mm:ss";
+            //this.dataGridView2.Columns["uid"].Visible = false;
             this.dataGridView2.Columns["parcel_uid"].Visible = false;
+            this.dataGridView2.Columns["ryosei_uid"].Visible = false;
+            this.dataGridView2.Columns["is_finished"].Visible = false;
+
+            this.dataGridView2.CurrentCell = null;
 
             dataGridView2.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="ryosei_id"></param>
-        /// <param name="ryosei_name"></param>
-        /// <param name="event_type">1:登録、2:受取</param>
-        void register(int ryosei_id, string ryosei_name, string room_name, int event_type)
-        {
+            //dataGridView2.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+            dataGridView2.RowTemplate.Height = 60;
 
-            //参考：ttps://www.ipentec.com/document/csharp-sql-server-connect-exec-sql
-            using (var conn = new SqlConnection(connStr))
+
+            //各行に色を付ける処理
+               //Rows.Count-1が大事
+            for (int row = 0; row < dataGridView2.Rows.Count-1; row++)
             {
-                conn.Open();
-                //parcelテーブル用
-                string v_owner_room_name, v_owner_ryosei_name, v_register_datatime, v_register_staff_id, v_register_staff_room_name,v_register_staff_ryosei_name, v_is_fridge;
-                
-                v_owner_room_name = room_name;
-                v_owner_ryosei_name = ryosei_name;
-                DateTime dt = DateTime.Now;
-                v_register_datatime = dt.ToString();
-                v_register_staff_id = "1";
-                v_register_staff_room_name =textBox1.Text;
-                v_register_staff_ryosei_name =textBox2.Text;
-                v_is_fridge = "0";
-                string query_insert_parcels = "insert into [parcels] (owner_room_name,owner_ryosei_name,register_datatime, register_staff_id, register_staff_room_name,register_staff_ryosei_name,is_fridge) values ('"+v_owner_room_name+"','" +v_owner_ryosei_name + "','" + v_register_datatime + "'," + v_register_staff_id + ",'" +v_register_staff_room_name+"','"+ v_register_staff_ryosei_name + "'," + v_is_fridge+")";
-                SqlCommand command_parcels = new SqlCommand(query_insert_parcels, conn);
-                command_parcels.ExecuteNonQuery();
-
-                //eventテーブル用
-                string query_get_parcel_uid = "select top(1) * from parcels order by uid desc";
-                SqlCommand command_parcels_event_1 = new SqlCommand(query_get_parcel_uid, conn);
-                SqlDataReader sdr1 = command_parcels_event_1.ExecuteReader();
-                sdr1.Read();
-                DateTime _confirm_register_datatime = (DateTime)sdr1["register_datatime"];
-                int _parcel_uid = (int)sdr1["uid"];
-                if (_confirm_register_datatime.ToString() == v_register_datatime)
+                string col = dataGridView2.Rows[row].Cells[0].Value.ToString();
+                if (col == "登録")
                 {
-                    //先頭の行が実行後のやつかどうか不安なのでチェックしたかった
+                    dataGridView2.Rows[row].Cells[0].Style.BackColor = color_register;
                 }
-                sdr1.Close();
-                command_parcels_event_1.Dispose();
-
-                string v_created_at, v_event_type, v_parcel_uid, v_room_name, v_ryosei_name;
-                v_created_at = v_register_datatime;
-                v_event_type = event_type.ToString();
-                v_parcel_uid = _parcel_uid.ToString();
-                v_room_name = room_name;
-                v_ryosei_name = ryosei_name;
-
-                string query_insert_event = "insert into [parcel_event] (created_at,event_type,parcel_uid,room_name,ryosei_name) values ('"+v_created_at+"',"+v_event_type + "," + v_parcel_uid + ",'" + v_room_name + "','" + v_ryosei_name+"')";
-                SqlCommand command_parcels_event = new SqlCommand(query_insert_event, conn);
-                command_parcels_event.ExecuteNonQuery();
-
-                //ryoseiテーブル用
-                string query_get_ryosei ="select * from ryosei where ryosei_name='"+v_owner_ryosei_name+"'";
-                SqlCommand command_ryosei_1 = new SqlCommand(query_get_ryosei, conn);
-                SqlDataReader sdr2 = command_ryosei_1.ExecuteReader();
-                sdr2.Read();
-                int _parcels_current_count = (int)sdr2["parcels_current_count"];
-                int _parcels_total_count = (int)sdr2["parcels_total_count"];
-                sdr2.Close();
-                command_ryosei_1.Dispose();
-
-                string v_parcels_current_count, v_parcels_total_count, v_last_event_datatime;
-                v_parcels_current_count = (_parcels_current_count + 1).ToString();
-                v_parcels_total_count = (_parcels_total_count + 1).ToString();
-                v_last_event_datatime = v_register_datatime;
-                string query_update_ryosei = "update ryosei set parcels_current_count=" + v_parcels_current_count + ",parcels_total_count=" + v_parcels_total_count + ",last_event_datatime='" + v_last_event_datatime + "' where ryosei_name='"+ryosei_name+"'";
-                SqlCommand command_ryosei_2 = new SqlCommand(query_update_ryosei, conn);
-                command_ryosei_2.ExecuteNonQuery();
-                conn.Close();
+                if (col == "受取")
+                {
+                    dataGridView2.Rows[row].Cells[0].Style.BackColor = color_release;
+                }
+                if (col == "削除")
+                {
+                    dataGridView2.Rows[row].Cells[0].Style.BackColor = color_delete;
+                }
             }
-            show_parcels_eventTable();
-            show_ryoseiTable();
 
+        }
+
+
+        void register(int owner_uid, int staff_uid, string ryosei_name, string room_name,string slack_id)
+        {
+            if (staff_uid == 0)
+            {
+                MessageBox.Show("事務当を登録してください", "boxTitle", MessageBoxButtons.OK);
+                return;
+            }
+            DialogResult result;
+            result = MessageBox.Show(room_name + " " + ryosei_name + "さんの荷物を登録します。", "boxTitle", MessageBoxButtons.OKCancel);
+
+            if (result == DialogResult.OK)
+            {
+
+
+                //SQL文の作成
+                MakeSQLCommand sqlstr = new MakeSQLCommand();
+                //---------------parcels {owner_room_name}','{owner_ryosei_name}','{register_datetime}','{register_staff_room_name}','{register_staff_ryosei_name}',{placement}
+                sqlstr.owner_uid = owner_uid;
+                sqlstr.register_staff_uid = staff_uid;
+                //sqlstr.owner_room_name = room_name;
+                //sqlstr.owner_ryosei_name = ryosei_name;
+                sqlstr.register_datetime = DateTime.Now.ToString();
+                //sqlstr.register_staff_room_name = textBox1.Text;
+                //sqlstr.register_staff_ryosei_name = textBox2.Text;
+                sqlstr.placement = 0;//暫定
+                //----------------event created_at,event_type,room_name,ryosei_name,parcel_uid
+                sqlstr.event_type = 1; //登録は1
+                //parcel_uid => SQL文で自動取得
+                //---------------ryoseiテーブルに必要なデータはすべて上で網羅されている
+                string aSqlStr = "";
+                aSqlStr += sqlstr.toRegister_parcels_table();
+                aSqlStr += sqlstr.toRegister_parcelevent_table();//parcelsテーブルの更新よりも後に行う（parcel_uidをSQL文で取得しているため）
+                aSqlStr += sqlstr.toRegister_ryosei_table();
+
+
+                //実際に書き換え
+                //参考：ttps://www.ipentec.com/document/csharp-sql-server-connect-exec-sql
+                Operation ope = new Operation(connStr);
+                ope.execute_sql(aSqlStr);
+                show_parcels_eventTable();
+                show_ryoseiTable();
+
+                //slackでの通知
+                if (slack_id != "")//登録していない人はDBではNULLとなっており、ここには""(空のstring)の形で来る
+                {
+                    Httppost httppost = new Httppost();
+                    httppost.user_code = slack_id;
+                    httppost.message_str = $"{sqlstr.register_datetime} に荷物が登録されました。";
+                    httppost.posting_DM();
+                }
+
+            }
+
+
+        }
+        void release(int owner_uid, int staff_uid, string ryosei_name, string room_name)
+        {
+            if (staff_uid == 0)
+            {
+                MessageBox.Show("事務当を登録してください", "boxTitle", MessageBoxButtons.OK);
+                return;
+            }
+
+
+            DateTime dt = DateTime.Now;//total_wait_timeの計算にも使用している。
+            //参考：ttps://www.ipentec.com/document/csharp-sql-server-connect-exec-sql
+            MakeSQLCommand sqlstr = new MakeSQLCommand();
+            sqlstr.owner_uid = owner_uid;
+
+            string sqlstr_get_all_current_parcel= sqlstr.toRelease_get_all_parcels();
+            Operation ope = new Operation(connStr);
+            List<int> CurrentParcels = ope.get_all_current_parcel(sqlstr_get_all_current_parcel);
+            //現状はその人名義の荷物をすべて取得している
+            //ここを書き換えれば、荷物を選択とかできると思うけど、今のままにしておいてすべて受け取らせて必要があればイベント削除、とかの運用のほうが良いと思う。
+
+            sqlstr.release_datetime = dt.ToString();
+            sqlstr.release_staff_uid = staff_uid;
+            sqlstr.parcels_total_waittime = ope.calculate_registered_time(CurrentParcels, dt,owner_uid);
+            string aSqlStr = "";
+            aSqlStr += sqlstr.toRelease_parcels_table(CurrentParcels);
+            aSqlStr += sqlstr.toRelease_parcelevent_table(CurrentParcels);
+            aSqlStr += sqlstr.toRelease_ryosei_table(CurrentParcels);
+
+
+            DialogResult result;
+            string msgbox_str = $@"{room_name} {ryosei_name} さんの荷物は、現在{CurrentParcels.Count.ToString()}個登録されています。
+荷物をすべて受け取りますか？
+";
+            result = MessageBox.Show(msgbox_str, "boxTitle", MessageBoxButtons.OKCancel);
+
+            if (result == DialogResult.OK)
+            {
+                ope.execute_sql(aSqlStr);
+                show_parcels_eventTable();
+                show_ryoseiTable();
+            }
+
+        }
+        void confirm(string event_uid_str, string ryosei_uid_str, string parcel_uid_str,string room_name, string ryosei_name)
+        {
+            DialogResult result;
+            string msgbox_str = $@"#{event_uid_str} の操作を取り消しますか？";
+            result = MessageBox.Show(msgbox_str, "boxTitle", MessageBoxButtons.OKCancel);
+
+            if (result == DialogResult.OK)
+            {
+                DialogResult result2;
+                string msgbox_str2 = $@"一度取り消した操作は元に戻すことは出来ません。
+#{event_uid_str} の操作を取り消します。
+よろしいですか？";
+                result2 = MessageBox.Show(msgbox_str2, "boxTitle", MessageBoxButtons.OKCancel);
+
+                if (result2 == DialogResult.OK)
+                {
+                    int event_uid, ryosei_uid, parcel_uid;
+                    int.TryParse(event_uid_str, out event_uid);
+                    int.TryParse(ryosei_uid_str, out ryosei_uid);
+                    int.TryParse(parcel_uid_str, out parcel_uid);
+
+                    MakeSQLCommand makeSQLCommand = new MakeSQLCommand();
+                    //{created_at}',{event_type},{parcel_uid},'{owner_room_name}','{owner_ryosei_name}
+                    makeSQLCommand.created_at = DateTime.Now.ToString();
+                    makeSQLCommand.event_uid = event_uid;
+                    makeSQLCommand.parcel_uid = parcel_uid;
+                    makeSQLCommand.owner_uid = ryosei_uid;
+
+                    string sqlstr = "";
+                    sqlstr += makeSQLCommand.toDeleteLogically_event_table();
+                    sqlstr += makeSQLCommand.toDeleteLoogically_ryosei_table();
+                    sqlstr += makeSQLCommand.toDeleteLogically_parcels_table();
+                    Operation ope = new Operation(connStr);
+                    ope.execute_sql(sqlstr);
+
+                    show_parcels_eventTable();
+                    show_ryoseiTable();
+                }
+            }
+        }
+
+        void change_staff(int ryosei_uid, string room_name, string ryosei_name)
+        {
+            DialogResult result;
+            result = MessageBox.Show("事務当を交代します\r\n次の事務当は" + room_name + " " + ryosei_name + "さんです。", "boxTitle", MessageBoxButtons.OKCancel);
+
+            if (result == DialogResult.OK)
+            {
+                textBox1.Text = room_name;
+                textBox2.Text = ryosei_name;
+                staff_uid = ryosei_uid;
+                staff_ryosei_room = room_name;
+                staff_ryosei_name = ryosei_name;
+
+                MakeSQLCommand makeSQLCommand = new MakeSQLCommand();
+                //{created_at}',{event_type},{parcel_uid},'{owner_room_name}','{owner_ryosei_name}
+                makeSQLCommand.ryosei_uid = ryosei_uid;
+                makeSQLCommand.created_at = DateTime.Now.ToString();
+                string sqlstr = makeSQLCommand.toChangeStaff_event_table();
+                Operation ope = new Operation(connStr);
+                ope.execute_sql(sqlstr);
+
+                show_parcels_eventTable();
+            }
 
         }
         void change_blockTabImage(int n)
-        {           
-            
+        {
+
             //リソースマネージャーを使う
             System.Reflection.Assembly assembly;
 
@@ -193,7 +343,7 @@ namespace RegisterParcelsFromPC
             ("RegisterParcelsFromPC.Properties.Resources", assembly);
 
             //指定されたリソースにインポートした画像を読み込む
-            //JANは画像名　Januaryの一月やね。
+            
 
             Bitmap A1 = (Bitmap)rm.GetObject("tab_a1");
             Bitmap A2 = (Bitmap)rm.GetObject("tab_a2");
@@ -234,7 +384,7 @@ namespace RegisterParcelsFromPC
             show_ryoseiTable();
             change_blockTabImage(0);
         }
-         
+
         private void pictureBox4_Click(object sender, EventArgs e)
         {
             ryoseiTable_block = 4;
@@ -250,12 +400,28 @@ namespace RegisterParcelsFromPC
         }
 
 
-        private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
         {
 
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox13_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }
