@@ -10,6 +10,7 @@ import android.widget.ImageButton;
 
 public class MainActivity extends AppCompatActivity {
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,9 +21,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private class TourokuListener implements AdapterView.OnClickListener {
-
-
-
         @Override
         public void onClick(View view) {
             Intent intent = new Intent(MainActivity.this, Tabbed_Touroku.class);
