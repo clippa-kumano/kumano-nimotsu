@@ -36,14 +36,14 @@
         android:layout_marginStart="54dp"
         android:layout_marginTop="80dp"
         android:background="@drawable/uketori"
-        android:onClick="onItemClick"
         app:layout_constraintStart_toEndOf="@+id/image_button_touroku"
         app:layout_constraintTop_toBottomOf="@+id/textView"
         tools:ignore="SpeakableTextPresentCheck" />
 
     <LinearLayout
-        android:layout_width="664dp"
-        android:layout_height="331dp"
+        android:id="@+id/linearLayout"
+        android:layout_width="700dp"
+        android:layout_height="176dp"
         android:layout_marginStart="50dp"
         android:layout_marginTop="50dp"
         android:orientation="vertical"
@@ -96,5 +96,37 @@
         android:text="荷物登録受取ログ"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/image_button_touroku" />
+
+    <Button
+        android:id="@+id/kumanotouroku"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="132dp"
+        android:layout_marginTop="52dp"
+        android:text="A101熊野の荷物登録"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+    <Button
+        android:id="@+id/kumanouketori"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="52dp"
+        android:text="A101熊野の荷物受取"
+        app:layout_constraintStart_toEndOf="@+id/kumanotouroku"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+    <TextView
+        android:id="@+id/NimotuJoutai"
+        android:layout_width="1079dp"
+        android:layout_height="75dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="30dp"
+        android:inputType="textMultiLine"
+
+        android:text="none\nnone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/kumanotouroku" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

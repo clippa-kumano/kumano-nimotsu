@@ -28,10 +28,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // テーブル作成用SQL文字列の作成。
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE nimotsu (");
-        sb.append("_id INTEGER PRIMARY KEY,");
+        sb.append("time TEXT,");
         sb.append("ryosei TEXT,");
-        sb.append("nimotsuTAG TEXT");
-        sb.append("time TEXT");
         sb.append("done TEXT");
         sb.append(");");
         String sql = sb.toString();
