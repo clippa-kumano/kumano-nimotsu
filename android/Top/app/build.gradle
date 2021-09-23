@@ -6,6 +6,8 @@ android {
     compileSdk 30
 
     defaultConfig {
+        //変更追加
+        vectorDrawables.useSupportLibrary = true
         applicationId "com.example.top"
         minSdk 23
         targetSdk 30

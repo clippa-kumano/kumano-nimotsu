@@ -9,7 +9,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /**
      * データベースファイル名の定数フィールド。
      */
-    private static final String DATABASE_NAME = "cocktailmemo.db";
+    private static final String DATABASE_NAME = "nimotsuApp.db";
     /**
      * バージョン情報の定数フィールド。
      */
@@ -25,17 +25,30 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // テーブル作成用SQL文字列の作成。
-        StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE nimotsu (");
-        sb.append("time TEXT,");
-        sb.append("ryosei TEXT,");
-        sb.append("done TEXT");
-        sb.append(");");
-        String sql = sb.toString();
-
+        // 寮生テーブル作成用SQL文字列の作成。
+        StringBuilder sb_ryosei = new StringBuilder();
+        sb_ryosei.append("CREATE TABLE ryosei (");
+        sb_ryosei.append("_id INTEGER PRIMARY KEY,");
+        sb_ryosei.append("block TEXT,");
+        sb_ryosei.append("heya TEXT,");
+        sb_ryosei.append("ryosei_name TEXT");
+        sb_ryosei.append(");");
+        String sql_ryosei = sb_ryosei.toString();
         // SQLの実行。
-        db.execSQL(sql);
+        db.execSQL(sql_ryosei);
+        // 荷物テーブル作成用SQL文字列の作成。
+        StringBuilder sb_nimotsu = new StringBuilder();
+        sb_nimotsu.append("CREATE TABLE nimotsu (");
+        sb_nimotsu.append("_id INTEGER PRIMARY KEY,");
+        sb_nimotsu.append("time TEXT,");
+        sb_nimotsu.append("block TEXT,");
+        sb_nimotsu.append("heya TEXT,");
+        sb_nimotsu.append("ryosei_name TEXT,");
+        sb_nimotsu.append("done TEXT");
+        sb_nimotsu.append(");");
+        String sql_nimotsu = sb_nimotsu.toString();
+   // SQLの実行。
+        db.execSQL(sql_nimotsu);
     }
 
     @Override

@@ -30,18 +30,31 @@ public class MainActivity extends AppCompatActivity {
         TourokuListener listener = new TourokuListener();
         image_button_touroku.setOnClickListener(listener);
 
+        ImageButton image_button_uketori = findViewById(R.id.image_button_uketori);
+        UketoriListener listener3 = new UketoriListener();
+        image_button_uketori.setOnClickListener(listener3);
+
         Button kumanotouroku = findViewById(R.id.kumanotouroku);
         A101KumanoTourokuListener listener2 = new A101KumanoTourokuListener();
         kumanotouroku.setOnClickListener(listener2);
 
         // DBヘルパーオブジェクトを生成。
         _helper = new com.example.top.DatabaseHelper(MainActivity.this);
+
     }
 
     private class TourokuListener implements AdapterView.OnClickListener {
         @Override
         public void onClick(View view) {
             Intent intent = new Intent(MainActivity.this, Tabbed_Touroku.class);
+            startActivity(intent);
+        }
+    }
+
+    private class UketoriListener implements View.OnClickListener{
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(MainActivity.this, Buttoned_Touroku.class);
             startActivity(intent);
         }
     }
@@ -60,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             String ryousei = "A101KumanoAjiri";
             String mada ="MadaUketottenai";
             // インサート用SQL文字列の用意。
-           // String sqlInsert = "INSERT INTO nimotsu (time, ryosei, done) VALUES (?, ?, ?)";
+            //String sqlInsert = "INSERT INTO nimotsu (time, ryosei, done) VALUES (?, ?, ?)";
             String sqlInsert = "INSERT INTO nimotsu VALUES (?, ?, ?)";
             // SQL文字列を元にプリペアドステートメントを取得。
             SQLiteStatement stmt = db.compileStatement(sqlInsert);
@@ -87,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
                 note +=   cursor.getString(ryouseiNote);
                 int ryouseiStatus =cursor.getColumnIndex("done");
                 note +=   cursor.getString(ryouseiStatus);
-               note += "\n";
+                note += "\n";
 
 
             }

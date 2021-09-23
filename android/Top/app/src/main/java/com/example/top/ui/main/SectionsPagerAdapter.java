@@ -11,6 +11,8 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import com.example.top.Touroku_A1;
 import com.example.top.Touroku_A2;
 import com.example.top.Touroku_A3;
+
+import com.example.top.Touroku_A4;
 import com.example.top.R;
 
 /**

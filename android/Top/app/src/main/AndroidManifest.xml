@@ -18,6 +18,13 @@
             android:name=".TourokuKari"
             android:exported="true" />
         <activity
+            android:name=".Buttoned_Touroku"
+            android:exported="true" />
+        <activity android:name=".TextActivity"/>
+        <activity
+            android:name=".Touroku_A4"
+            android:exported="true" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

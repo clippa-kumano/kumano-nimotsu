@@ -27,4 +27,10 @@
     <string name="tab_block_9">C34</string>
     <string name="tab_block_10">臨キャ</string>
 
+    <string name="title">タイトル</string>
+    <string name="contents">内容</string>
+    <string name="reg">登録</string>
+    <string name="del">削除</string>
+    <string name="cancel">キャンセル</string>
+
 </resources>

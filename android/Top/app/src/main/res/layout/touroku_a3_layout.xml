@@ -8,8 +8,8 @@
 
     <TextView
         android:id="@+id/textView9"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="805dp"
+        android:layout_height="145dp"
         android:text="This_is_A3Block"
         android:textColor="@android:color/white"
         android:textSize="100sp"
@@ -20,9 +20,19 @@
         android:id="@+id/lvMenu"
         android:layout_width="686dp"
         android:layout_height="712dp"
-        android:layout_marginStart="36dp"
-        android:layout_marginBottom="348dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginBottom="268dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/button3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="31dp"
+        android:text="Button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView9" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
