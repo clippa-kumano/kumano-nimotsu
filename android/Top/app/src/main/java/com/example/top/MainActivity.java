@@ -38,10 +38,10 @@ public class MainActivity extends AppCompatActivity {
         A101KumanoTourokuListener listener2 = new A101KumanoTourokuListener();
         kumanotouroku.setOnClickListener(listener2);
 
-        // DBヘルパーオブジェクトを生成。
-        _helper = new com.example.top.DatabaseHelper(MainActivity.this);
 
     }
+
+
 
     private class TourokuListener implements AdapterView.OnClickListener {
         @Override
@@ -54,7 +54,12 @@ public class MainActivity extends AppCompatActivity {
     private class UketoriListener implements View.OnClickListener{
         @Override
         public void onClick(View view) {
+
             Intent intent = new Intent(MainActivity.this, Buttoned_Touroku.class);
+
+            EditText jimuto_name = findViewById(R.id.jimuto_name_EditTextT);
+            String jimuto_nameStr = jimuto_name.getText().toString();
+            intent.putExtra("Jimuto_name",jimuto_nameStr );
             startActivity(intent);
         }
     }

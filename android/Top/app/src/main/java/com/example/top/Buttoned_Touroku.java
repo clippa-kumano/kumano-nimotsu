@@ -14,6 +14,8 @@ import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -39,6 +41,13 @@ public class Buttoned_Touroku extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.buttoned_touroku_layout);
 
+        //事務当番の名前を受け取る
+        Intent intent = getIntent();
+        String jimuto_name_Str = intent.getStringExtra("Jimuto_name");
+        //事務当番の名前を表示する
+        TextView jimuto_name =findViewById(R.id.jimutou_name_show);
+        jimuto_name.setText("ただいまの事務当番は "+jimuto_name_Str+" です。");
+
         selectedBlock = "A1";
         Button buttonA1=(Button)findViewById(R.id.touroku_a1_tab);
         Button buttonA2=(Button)findViewById(R.id.touroku_a2_tab);
@@ -47,7 +56,6 @@ public class Buttoned_Touroku extends AppCompatActivity {
         Button buttonB12=(Button)findViewById(R.id.touroku_b12_tab);
 
         Buttoned_Touroku.BlockSelectListener listener = new Buttoned_Touroku.BlockSelectListener();
-
         buttonA1.setOnClickListener(listener);
         buttonA2.setOnClickListener(listener);
         buttonA3.setOnClickListener(listener);
@@ -57,12 +65,15 @@ public class Buttoned_Touroku extends AppCompatActivity {
         Button backbutton =(Button)findViewById(R.id.go_back_button);
         backbutton.setOnClickListener(this::onBackButtonClick);
 
+        ListView listListener = findViewById(R.id.ryousei_list_show);
+        listListener.setOnItemClickListener(new ListItemClickListener());
+
         // DBヘルパーオブジェクトを生成。
         _helper = new com.example.top.DatabaseHelper(Buttoned_Touroku.this);
 
         SQLiteDatabase db = _helper.getWritableDatabase();
-
-        this.addRecord("A1","A101","取手");
+/*
+       　this.addRecord("A1","A101","取手");
         this.addRecord("A1","A101","天王台");
         this.addRecord("A1","A102","我孫子");
         this.addRecord("A1","A102","柏");
@@ -94,6 +105,9 @@ public class Buttoned_Touroku extends AppCompatActivity {
         this.addRecord("A3","A303","新八柱");
         this.addRecord("A3","A303","新松戸");
         this.addRecord("A3","A303","南流山");
+
+
+ */
         this.show_ryosei("A1");
 
     }
@@ -129,7 +143,6 @@ public class Buttoned_Touroku extends AppCompatActivity {
         super.onDestroy();
         cursor.close();
     }
-
 
 
     public void show_ryosei (String block){
@@ -187,5 +200,14 @@ public class Buttoned_Touroku extends AppCompatActivity {
 
     public void onBackButtonClick(View view){
         finish();
+    }
+
+    private class ListItemClickListener implements AdapterView.OnItemClickListener{
+
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id){
+            String item = (String)parent.getItemAtPosition(position);
+            String show = item + "に荷物登録をしました。（してない）";
+            Toast.makeText(Buttoned_Touroku.this, show ,Toast.LENGTH_LONG).show();
+        }
     }
 }
