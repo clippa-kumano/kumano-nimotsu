@@ -24,6 +24,7 @@ namespace RegisterParcelsFromPC
         public int ryosei_uid;
         public string room_name, ryosei_name, ryosei_name_kana, ryosei_name_alphabet;
         public int block_id, status, parcels_current_count, parcels_total_count;
+        public string slack_id;
         public string parcels_total_waittime;
         public int last_event_id;
         public string last_event_datetime;
@@ -60,11 +61,29 @@ where block_id='{block_id}'
             return sql;
 
         }
+        public string forShow_ryosei_table_night_duty_mode(){
+            string sql = $@"
+SELECT 
+[room_name] as '部屋番号'
+,[ryosei_name] as '氏名'
+,[parcels_current_count] as '荷物数'
+, '登録' as '登録'
+, '受取' as '受取'
+,slack_id
+,uid
+FROM [parcels].[dbo].[ryosei] 
+where block_id='{block_id}'
+and parcels_current_count >= 1
+";
+
+            return sql;
+
+        }
         public string forShow_event_table()
         {
             string sql=$@"
 SELECT top(50)
-case [event_type] when 1 then '登録' when 2 then '受取' when 3 then '削除' else 'その他' end  as '操作種類'
+case [event_type] when 1 then '登録' when 2 then '受取' when 3 then '削除' when 11 then 'モード開始' when 12 then 'モード解除'  else 'その他' end  as '操作種類'
 ,uid as '#'
 ,[room_name] as '部屋番号'
 ,[ryosei_name] as '氏名　　　'
@@ -290,5 +309,46 @@ values
             return sql;
         }
     
+        public string Register_new_ryosei_table()
+        {
+            string sql = $@"
+insert into [ryosei]
+(room_name,ryosei_name,ryosei_name_kana,block_id)
+values
+(
+'{room_name}'
+,'{ryosei_name}'
+,'{ryosei_name_kana}'
+,{block_id}
+)
+";
+            return sql;
+        }
+
+        public string toChangeMode()
+        {
+            string sql = $@"
+insert into [parcel_event] 
+(created_at,event_type) 
+values 
+(
+'{created_at}'
+,{event_type} 
+)
+";
+            return sql;
+        }
+
+        public string toRegister_slack()
+        {
+            string sql = $@"
+update ryosei
+set slack_id = '{slack_id}'
+where ryosei_name = '{ryosei_name}'
+and room_name = '{room_name}'
+";
+            return sql;
+        }
+
     }
 }

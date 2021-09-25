@@ -16,12 +16,14 @@ namespace RegisterParcelsFromPC
         string connStr = @"Server=.\SQLEXPRESS;Initial Catalog=parcels;UID=sa;PWD=kumano";
         int ryoseiTable_block = 1;
         int staff_uid=0;
+        int night_duty_mode = 0;
         string staff_ryosei_name="", staff_ryosei_room="";
 
 
         Color color_register = Color.FromArgb(218, 255, 245);
         Color color_release = Color.FromArgb(217, 255, 218);
         Color color_delete = Color.FromArgb(255, 216, 216);
+        Color color_night_duty_mode = Color.Lavender;
 
         public Form1()
         {
@@ -55,11 +57,11 @@ namespace RegisterParcelsFromPC
                 // クリックがヘッダー部分などの場合はインデックスが-1となります。
                 //ryosei table col 0:部屋番号、1:氏名、2:荷物数、3:登録、4:受取、5:slack_id, 6:ryosei_uid
                 //event table  col 0:イベント種類、1:uid、2:部屋番号, 3:氏名、4:時刻、5:note、6:parcel_uid,7:ryosei_uid,8:is_finished
-                if (row >= 0 && col == 1 && boxTitle == "left_side")//登録
+                if (row >= 0 && col == 1 && boxTitle == "left_side")//事務当の登録
                 {
                     change_staff(int.Parse(g[6, row].Value.ToString()), g[0, row].Value.ToString(), g[1, row].Value.ToString());
                 }
-                if (row >= 0 && col == 3&& boxTitle=="left_side")//登録
+                if (row >= 0 && col == 3&& boxTitle=="left_side")//荷物の登録
                 {
 
                     register(int.Parse(g[6, row].Value.ToString()),staff_uid,g[1, row].Value.ToString(), g[0, row].Value.ToString(), g[5, row].Value.ToString());
@@ -99,7 +101,14 @@ namespace RegisterParcelsFromPC
                 var cmd = conn.CreateCommand();
                 MakeSQLCommand sqlstr = new MakeSQLCommand();
                 sqlstr.block_id = ryoseiTable_block;
-                cmd.CommandText = sqlstr.forShow_ryosei_table();
+                if (night_duty_mode==0) {
+                    cmd.CommandText = sqlstr.forShow_ryosei_table();
+                }
+                else
+                {
+                    cmd.CommandText = sqlstr.forShow_ryosei_table_night_duty_mode();
+                }
+
                 var sda = new SqlDataAdapter(cmd);
                 sda.Fill(dt);
             }
@@ -119,6 +128,7 @@ namespace RegisterParcelsFromPC
 
 
         }
+        
         void show_parcels_eventTable()
         {
             var dt = new DataTable();
@@ -160,6 +170,10 @@ namespace RegisterParcelsFromPC
                 if (col == "削除")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_delete;
+                }
+                if (col == "モード解除" || col == "モード開始")
+                {
+                    dataGridView2.Rows[row].Cells[0].Style.BackColor = color_night_duty_mode;
                 }
             }
 
@@ -364,39 +378,62 @@ namespace RegisterParcelsFromPC
 
 
         }
+
+        void Change_Mode(int event_type)
+        {
+            MakeSQLCommand makeSQLCommand = new MakeSQLCommand();
+            makeSQLCommand.event_type = event_type;
+            makeSQLCommand.created_at = DateTime.Now.ToString();
+            string sqlstr = makeSQLCommand.toChangeMode();
+            Operation ope = new Operation(connStr);
+            ope.execute_sql(sqlstr);
+            show_parcels_eventTable();
+
+        }
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-            ryoseiTable_block = 1;
-            show_ryoseiTable();
-            change_blockTabImage(1);
+
+                ryoseiTable_block = 1;
+                show_ryoseiTable();
+                change_blockTabImage(1);
+
+            
         }
 
         private void pictureBox2_Click(object sender, EventArgs e)
         {
-            ryoseiTable_block = 2;
-            show_ryoseiTable();
-            change_blockTabImage(2);
+ 
+                ryoseiTable_block = 2;
+                show_ryoseiTable();
+                change_blockTabImage(2);
+            
+
         }
 
         private void pictureBox3_Click(object sender, EventArgs e)
-        {
-            ryoseiTable_block = 3;
-            show_ryoseiTable();
-            change_blockTabImage(0);
+        {   
+
+                ryoseiTable_block = 3;
+                show_ryoseiTable();
+                change_blockTabImage(0);
+
         }
 
         private void pictureBox4_Click(object sender, EventArgs e)
         {
-            ryoseiTable_block = 4;
-            show_ryoseiTable();
-            change_blockTabImage(0);
+
+                ryoseiTable_block = 4;
+                show_ryoseiTable();
+                change_blockTabImage(0);
+
         }
 
         private void pictureBox5_Click(object sender, EventArgs e)
         {
-            ryoseiTable_block = 5;
-            show_ryoseiTable();
-            change_blockTabImage(0);
+                ryoseiTable_block = 5;
+                show_ryoseiTable();
+                change_blockTabImage(0);
+
         }
 
 
@@ -417,6 +454,37 @@ namespace RegisterParcelsFromPC
         }
 
         private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (night_duty_mode == 0){
+                night_duty_mode = 1;
+                MessageBox.Show("泊事務当確認モード");
+                Change_Mode(11);
+            }
+            else {
+                night_duty_mode = 0;
+                MessageBox.Show("モード解除");
+                Change_Mode(12);
+            }
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Form2 form2 = new Form2();
+            form2.Show();
+        }
+
+        private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }
