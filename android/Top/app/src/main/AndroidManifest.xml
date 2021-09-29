@@ -10,20 +10,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Top">
         <activity
-            android:name=".Tabbed_Touroku"
-            android:exported="true"
-            android:label="@string/title_activity_tabbed_touroku"
-            android:theme="@style/Theme.Top.NoActionBar" />
+            android:name=".Nimotsu_show"
+            android:exported="true" />
         <activity
-            android:name=".TourokuKari"
+            android:name=".MainActivity2"
+            android:exported="true" />
+        <activity
+            android:name=".Jimuto_Change"
             android:exported="true" />
         <activity
             android:name=".Buttoned_Touroku"
             android:exported="true" />
-        <activity android:name=".TextActivity"/>
-        <activity
-            android:name=".Touroku_A4"
-            android:exported="true" />
+        <activity android:name=".TextActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

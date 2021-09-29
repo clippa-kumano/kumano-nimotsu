@@ -1,0 +1,26 @@
+﻿<Properties StartupConfiguration="{55DEA23D-B183-4574-BE19-4154D8AE06B2}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="MakeSQLCommand.cs">
+    <Files>
+      <File FileName="Form1.cs" Line="213" Column="43" />
+      <File FileName="MakeSQLCommand.cs" Line="91" Column="2" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="RegisterParcelsFromPC" expanded="True">
+            <Node name="RegisterParcelsFromPC" expanded="True">
+              <Node name="MakeSQLCommand.cs" selected="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.RegisterParcelsFromPC PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>

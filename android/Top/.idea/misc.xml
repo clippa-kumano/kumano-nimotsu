@@ -6,11 +6,15 @@
         <entry key="../../../../../../../layout/custom_preview.xml" value="0.14375" />
         <entry key="app/src/main/res/drawable/frame_border.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1950207468879668" />
+        <entry key="app/src/main/res/layout/activity_main2.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/activity_nimotsu_show.xml" value="0.11381025248661056" />
         <entry key="app/src/main/res/layout/activity_tabbed_touroku.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_text.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_touroku_kari.xml" value="0.1" />
         <entry key="app/src/main/res/layout/buttoned_touroku_layout.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_tabbed__touroku.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/jimuto_change_layout.xml" value="0.18" />
+        <entry key="app/src/main/res/layout/jimuto_touroku_layout.xml" value="0.1" />
         <entry key="app/src/main/res/layout/row_main.xml" value="0.1" />
         <entry key="app/src/main/res/layout/touroku_a1_layout.xml" value="0.141015625" />
         <entry key="app/src/main/res/layout/touroku_a2_layout.xml" value="0.141015625" />

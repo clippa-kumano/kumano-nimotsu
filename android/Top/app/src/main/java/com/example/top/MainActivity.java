@@ -14,69 +14,100 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int JIMUTOCHANGE_ACTIVITY = 1001;
+    String jimuto_room = "";
+    String jimuto_name = "";
+    String jimuto_id = "";
 
     private DatabaseHelper _helper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         ImageButton image_button_touroku = findViewById(R.id.image_button_touroku);
-        TourokuListener listener = new TourokuListener();
-        image_button_touroku.setOnClickListener(listener);
+        TourokuListener listener3 = new TourokuListener();
+        image_button_touroku.setOnClickListener(listener3);
+
+
+        Button jimutou_change = findViewById(R.id.jimuto_change_button);
+        JimutoChangeListener listener4 = new JimutoChangeListener();
+        jimutou_change.setOnClickListener(listener4);
 
         ImageButton image_button_uketori = findViewById(R.id.image_button_uketori);
-        UketoriListener listener3 = new UketoriListener();
-        image_button_uketori.setOnClickListener(listener3);
-
-        Button kumanotouroku = findViewById(R.id.kumanotouroku);
-        A101KumanoTourokuListener listener2 = new A101KumanoTourokuListener();
-        kumanotouroku.setOnClickListener(listener2);
+        UketoriListener listener5 = new UketoriListener();
+        image_button_uketori.setOnClickListener(listener5);
 
 
     }
 
+    public void onReturnJimutoValue(String value, String id) {
+        jimuto_id = id;
 
-
-    private class TourokuListener implements AdapterView.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            Intent intent = new Intent(MainActivity.this, Tabbed_Touroku.class);
-            startActivity(intent);
-        }
+        String[] newStr = value.split("\\s+");
+        jimuto_room = newStr[0];
+        jimuto_name = newStr[1];
+        TextView jimuto_show = findViewById(R.id.main_jimutou_show);
+        jimuto_show.setText(jimuto_room + " " + jimuto_name);
     }
 
-    private class UketoriListener implements View.OnClickListener{
+
+    private class TourokuListener implements View.OnClickListener {
         @Override
         public void onClick(View view) {
 
             Intent intent = new Intent(MainActivity.this, Buttoned_Touroku.class);
 
-            EditText jimuto_name = findViewById(R.id.jimuto_name_EditTextT);
-            String jimuto_nameStr = jimuto_name.getText().toString();
-            intent.putExtra("Jimuto_name",jimuto_nameStr );
+            intent.putExtra("Jimuto_id", jimuto_id);
+            intent.putExtra("Jimuto_room", jimuto_room);
+            intent.putExtra("Jimuto_name", jimuto_name);
             startActivity(intent);
         }
     }
 
-    private class A101KumanoTourokuListener implements View.OnClickListener{
+    private class UketoriListener implements  View.OnClickListener {
         @Override
         public void onClick(View view){
+            Intent intent = new Intent(MainActivity.this, Nimotsu_show.class);
+            startActivity(intent);
+        }
+
+    }
+
+
+    private class JimutoChangeListener implements AdapterView.OnClickListener {
+        @Override
+        public void onClick(View view) {
+            Intent jimuto_intent = new Intent(MainActivity.this, Jimuto_Change.class);
+            jimuto_intent.putExtra("Jimuto_name",jimuto_room + " " + jimuto_name);
+            jimuto_intent.putExtra("Jimuto_id",jimuto_id);
+            startActivityForResult(jimuto_intent,JIMUTOCHANGE_ACTIVITY);
+        }
+    }
+
+
+    private class A101KumanoTourokuListener implements View.OnClickListener {
+        @Override
+        public void onClick(View view) {
 
             // データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
             SQLiteDatabase db = _helper.getWritableDatabase();
 
             // 日時情報を指定フォーマットの文字列で取得
             Date dateObj = new Date();
-            SimpleDateFormat format = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
-            String date = format.format( dateObj );
+            SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            String date = format.format(dateObj);
             String ryousei = "A101KumanoAjiri";
-            String mada ="MadaUketottenai";
+            String mada = "MadaUketottenai";
             // インサート用SQL文字列の用意。
             //String sqlInsert = "INSERT INTO nimotsu (time, ryosei, done) VALUES (?, ?, ?)";
             String sqlInsert = "INSERT INTO nimotsu VALUES (?, ?, ?)";
@@ -96,25 +127,35 @@ public class MainActivity extends AppCompatActivity {
             // データベースから取得した値を格納する変数の用意。データがなかった時のための初期値も用意。
             String note = "";
             // SQL実行の戻り値であるカーソルオブジェクトをループさせてデータベース内のデータを取得。
-            while(cursor.moveToNext()) {
+            while (cursor.moveToNext()) {
                 // カラムのインデックス値を取得。
                 int dateNote = cursor.getColumnIndex("time");
                 // カラムのインデックス値を元に実際のデータを取得。
                 note += cursor.getString(dateNote);
-                int ryouseiNote =cursor.getColumnIndex("ryosei");
-                note +=   cursor.getString(ryouseiNote);
-                int ryouseiStatus =cursor.getColumnIndex("done");
-                note +=   cursor.getString(ryouseiStatus);
+                int ryouseiNote = cursor.getColumnIndex("ryosei");
+                note += cursor.getString(ryouseiNote);
+                int ryouseiStatus = cursor.getColumnIndex("done");
+                note += cursor.getString(ryouseiStatus);
                 note += "\n";
 
 
             }
-            // 感想のEditTextの各画面部品を取得しデータベースの値を反映。
-            TextView etNote = findViewById(R.id.NimotuJoutai);
-            etNote.setText(note);
-
-
-
         }
     }
-}
+
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+            switch (requestCode) {
+                case JIMUTOCHANGE_ACTIVITY:
+                    jimuto_id = intent.getStringExtra("Jimuto_id");
+                    String[] newStr = intent.getStringExtra("Jimuto_room_name").split("\\s+");
+                    jimuto_room = newStr[0];
+                    jimuto_name = newStr[1];
+                    TextView jimuto_show = findViewById(R.id.main_jimutou_show);
+                    jimuto_show.setText(jimuto_room + " " + jimuto_name);
+                default:
+            }
+        }
+    }
+

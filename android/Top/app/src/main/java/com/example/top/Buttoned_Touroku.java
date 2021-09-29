@@ -1,6 +1,5 @@
 package com.example.top;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -11,28 +10,39 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.DialogFragment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class Buttoned_Touroku extends AppCompatActivity {
 
-    String selectedBlock = "A1";
-    //表示するブロック 初期値はA1
+    int selectedBlock = 1;
+    //表示するブロック 初期値は,
+    // A1は1 A2は2...C34は8 臨キャパは9
 
     private DatabaseHelper _helper;
     Cursor cursor;
 
     //ArrayListを用意
     private ArrayList<String > ryosei_block = new ArrayList<>();
+    private String jimuto_name_Str= "";
+    private String jimuto_id_Str= "";
+    private String jimuto_room_Str= "";
+    private ArrayList<String> blocks_roomname_name = new ArrayList<>();
+    private ArrayList<String> blocks_ryosei_id = new ArrayList<>();
+    private List<Map<String,String>> show_list = new ArrayList<>();
+    private String[] from={"id","room_name"};
+    private int[] to = {android.R.id.text2,android.R.id.text1};
 
 
 
@@ -43,12 +53,14 @@ public class Buttoned_Touroku extends AppCompatActivity {
 
         //事務当番の名前を受け取る
         Intent intent = getIntent();
-        String jimuto_name_Str = intent.getStringExtra("Jimuto_name");
+        jimuto_name_Str = intent.getStringExtra("Jimuto_name");
+        jimuto_id_Str = intent.getStringExtra("Jimuto_id");
+        jimuto_room_Str = intent.getStringExtra("Jimuto_room");
         //事務当番の名前を表示する
         TextView jimuto_name =findViewById(R.id.jimutou_name_show);
-        jimuto_name.setText("ただいまの事務当番は "+jimuto_name_Str+" です。");
+        jimuto_name.setText("ただいまの事務当番は " + jimuto_room_Str +" "+jimuto_name_Str+" です。");
 
-        selectedBlock = "A1";
+        selectedBlock = 1;
         Button buttonA1=(Button)findViewById(R.id.touroku_a1_tab);
         Button buttonA2=(Button)findViewById(R.id.touroku_a2_tab);
         Button buttonA3=(Button)findViewById(R.id.touroku_a3_tab);
@@ -65,50 +77,16 @@ public class Buttoned_Touroku extends AppCompatActivity {
         Button backbutton =(Button)findViewById(R.id.go_back_button);
         backbutton.setOnClickListener(this::onBackButtonClick);
 
-        ListView listListener = findViewById(R.id.ryousei_list_show);
-        listListener.setOnItemClickListener(new ListItemClickListener());
+
 
         // DBヘルパーオブジェクトを生成。
         _helper = new com.example.top.DatabaseHelper(Buttoned_Touroku.this);
 
         SQLiteDatabase db = _helper.getWritableDatabase();
-/*
-       　this.addRecord("A1","A101","取手");
-        this.addRecord("A1","A101","天王台");
-        this.addRecord("A1","A102","我孫子");
-        this.addRecord("A1","A102","柏");
-        this.addRecord("A1","A103","松戸");
-        this.addRecord("A1","A103","北千住");
-        this.addRecord("A1","A103","南千住");
-        this.addRecord("A1","A104","三河島");
-        this.addRecord("A1","A104","日暮里");
-        this.addRecord("A1","A104","上野");
-        this.addRecord("A1","A104","東京");
-        this.addRecord("A1","A105","新橋");
-        this.addRecord("A1","A105","品川");
 
-        this.addRecord("A2","A201","千葉");
-        this.addRecord("A2","A201","稲毛");
-        this.addRecord("A2","A202","津田沼");
-        this.addRecord("A2","A202","船橋");
-        this.addRecord("A2","A203","市川");
-        this.addRecord("A2","A203","新小岩");
-        this.addRecord("A2","A203","錦糸町");
-        this.addRecord("A2","A204","馬喰町");
-        this.addRecord("A2","A204","新日本橋");
-        this.addRecord("A2","A204","東京");
-
-        this.addRecord("A3","A301","西船橋");
-        this.addRecord("A3","A301","船橋法典");
-        this.addRecord("A3","A302","市川大野");
-        this.addRecord("A3","A302","東松戸");
-        this.addRecord("A3","A303","新八柱");
-        this.addRecord("A3","A303","新松戸");
-        this.addRecord("A3","A303","南流山");
-
-
- */
-        this.show_ryosei("A1");
+        this.show_ryosei(1);
+        ListView listListener = findViewById(R.id.touroku_ryousei_list_show);
+        listListener.setOnItemClickListener(new ListItemClickListener());
 
     }
 
@@ -117,19 +95,19 @@ public class Buttoned_Touroku extends AppCompatActivity {
         public void onClick(View view) {
             switch(view.getId()){
                 case R.id.touroku_a1_tab:
-                    selectedBlock = "A1";
+                    selectedBlock = 1;
                     break;
                 case R.id.touroku_a2_tab:
-                    selectedBlock = "A2";
+                    selectedBlock = 2;
                     break;
                 case R.id.touroku_a3_tab:
-                    selectedBlock = "A3";
+                    selectedBlock = 3;
                     break;
                 case R.id.touroku_a4_tab:
-                    selectedBlock = "A4";
+                    selectedBlock = 4;
                     break;
                 case R.id.touroku_b12_tab:
-                    selectedBlock = "B12";
+                    selectedBlock = 5;
                     break;
             }
 
@@ -138,19 +116,14 @@ public class Buttoned_Touroku extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        cursor.close();
-    }
 
 
-    public void show_ryosei (String block){
+  /*  public void show_ryosei (int block){
         ryosei_block =new ArrayList<String>();
         // データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
         SQLiteDatabase db = _helper.getWritableDatabase();
         // 主キーによる検索SQL文字列の用意。
-        String sql = "SELECT heya, ryosei_name FROM ryosei WHERE block = '"+block+"';" ;
+        String sql = "SELECT room_name, ryosei_name FROM ryosei WHERE block_id = '"+ String.valueOf(block) +"';" ;
         // SQLの実行。
         Cursor cursor = db.rawQuery(sql, null);
         //ブロックの寮生を検索しArrayListに追加
@@ -158,7 +131,7 @@ public class Buttoned_Touroku extends AppCompatActivity {
             // データベースから取得した値を格納する変数の用意。データがなかった時のための初期値も用意。
             String note = "";
             // カラムのインデックス値を取得。
-            int dateNote = cursor.getColumnIndex("heya");
+            int dateNote = cursor.getColumnIndex("room_name");
             // カラムのインデックス値を元に実際のデータを取得。
             note += cursor.getString(dateNote);
             note += " ";
@@ -170,18 +143,67 @@ public class Buttoned_Touroku extends AppCompatActivity {
         ArrayAdapter adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, ryosei_block);
 
         // ListViewにArrayAdapterを設定する
-        ListView listView = (ListView)findViewById(R.id.ryousei_list_show);
+        ListView listView = (ListView)findViewById(R.id.touroku_ryousei_list_show);
         listView.setAdapter(adapter);
+        cursor.close();
+    } */
+
+    public void show_ryosei (int block){
+        show_list.clear();
+        // データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
+        SQLiteDatabase db = _helper.getWritableDatabase();
+        // 主キーによる検索SQL文字列の用意。
+        String sql = "SELECT _id, room_name, ryosei_name FROM ryosei WHERE block_id = '"+ String.valueOf(block) +"';" ;
+        // SQLの実行。
+        Cursor cursor = db.rawQuery(sql, null);
+        //ブロックの寮生を検索しArrayListに追加
+        while(cursor.moveToNext()) {
+            Map<String,String> ryosei_raw = new HashMap<>();
+            // データベースから取得した値を格納する変数の用意。データがなかった時のための初期値も用意。
+            String note = "";
+            String ryosei_id = "";
+            // カラムのインデックス値を取得。
+            int idNote = cursor.getColumnIndex("_id");
+            // カラムのインデックス値を元に実際のデータを取得。
+            ryosei_id = String.valueOf(cursor.getInt(idNote));
+            ryosei_raw.put("id",String.valueOf(cursor.getInt(idNote)));
+            // カラムのインデックス値を取得。
+            int roomNameNote = cursor.getColumnIndex("room_name");
+            // カラムのインデックス値を元に実際のデータを取得。
+            note += cursor.getString(roomNameNote);
+            note += " ";
+            int ryouseiNote = cursor.getColumnIndex("ryosei_name");
+            note += cursor.getString(ryouseiNote);
+            ryosei_raw.put("room_name",note);
+            blocks_roomname_name.add(note);
+            blocks_ryosei_id.add(ryosei_id);
+            show_list.add(ryosei_raw);
+
+        }
+        // リスト項目とListViewを対応付けるArrayAdapterを用意する
+        SimpleAdapter adapter = new SimpleAdapter
+                (this,
+                        show_list,
+                        android.R.layout.simple_list_item_1,
+                        from,
+                        to);
+
+        // ListViewにArrayAdapterを設定する
+        ListView listView = (ListView)findViewById(R.id.touroku_ryousei_list_show);
+        listView.setAdapter(adapter);
+        ListView listListener = findViewById(R.id.touroku_ryousei_list_show);
+        listListener.setOnItemClickListener(new ListItemClickListener());
     }
 
-    public void addRecord (String block, String heya, String ryousei_name) {
+
+    public void addRecord (int block, String heya, String ryousei_name) {
         // データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
         SQLiteDatabase db = _helper.getWritableDatabase();
         // データベースヘルパーオブジェクトからデータベース接続オブジェクトを取得。
-        String sqlInsert = "INSERT INTO ryosei (block, heya, ryosei_name) VALUES (?, ?, ?)";
+        String sqlInsert = "INSERT INTO ryosei (block_id, room_name, ryosei_name) VALUES (?, ?, ?)";
         SQLiteStatement stmt = db.compileStatement(sqlInsert);
         // 変数のバイド。
-        stmt.bindString(1, block);
+        stmt.bindLong(1, block);
         stmt.bindString(2, heya);
         stmt.bindString(3, ryousei_name);
         // インサートSQLの実行。
@@ -192,7 +214,7 @@ public class Buttoned_Touroku extends AppCompatActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if(keyCode == KeyEvent.KEYCODE_BACK) {
             // 戻るボタンの処理
-
+            finish();
         }
 
         return true;
@@ -202,12 +224,35 @@ public class Buttoned_Touroku extends AppCompatActivity {
         finish();
     }
 
+
     private class ListItemClickListener implements AdapterView.OnItemClickListener{
 
         public void onItemClick(AdapterView<?> parent, View view, int position, long id){
-            String item = (String)parent.getItemAtPosition(position);
-            String show = item + "に荷物登録をしました。（してない）";
-            Toast.makeText(Buttoned_Touroku.this, show ,Toast.LENGTH_LONG).show();
+            Map<String ,String> item = (Map)parent.getItemAtPosition(position);
+            this.showDialog(view,item.get("room_name"),item.get("id"));
+            /*String show = item + "に荷物登録をしました。（してない）";
+            Toast.makeText(Buttoned_Touroku.this, show ,Toast.LENGTH_LONG).show();*/
         }
+        public void showDialog(View view,String owner_room_name,String owner_id) {
+            DialogFragment dialogFragment = new Nimotsu_Touroku_Dialog();
+            
+            String[] newStr = owner_room_name.split("\\s+");
+            /*
+            jimuto_room_Str = newStr[0];
+            jimuto_name_Str = newStr[1];
+            jimuto_id_Str = owner_id; */
+
+            Bundle args = new Bundle();
+            args.putString("owner_room",newStr[0]);
+            args.putString("owner_name",newStr[1]);
+            args.putString("owner_id",owner_id);
+            args.putString("register_staff_room",jimuto_room_Str);
+            args.putString("register_staff_name",jimuto_name_Str);
+            args.putString("register_staff_id",jimuto_id_Str);
+
+            dialogFragment.setArguments(args);
+            dialogFragment.show(getSupportFragmentManager(), "Nimotsu_Touroku_Dialog");
+        }
+
     }
 }
