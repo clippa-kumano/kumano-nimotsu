@@ -83,7 +83,7 @@ and parcels_current_count >= 1
         {
             string sql=$@"
 SELECT top(50)
-case [event_type] when 1 then '登録' when 2 then '受取' when 3 then '削除' when 11 then 'モード開始' when 12 then 'モード解除'  else 'その他' end  as '操作種類'
+case [event_type] when 1 then '登録' when 2 then '受取' when 3 then '削除' when 10 then '当番交代' when 11 then 'モード開始' when 12 then 'モード解除'  else 'その他' end  as '操作種類'
 ,uid as '#'
 ,[room_name] as '部屋番号'
 ,[ryosei_name] as '氏名　　　'
@@ -234,7 +234,6 @@ where uid={owner_uid}
 
         public string toDeleteLogically_event_table()
         {
-            event_type = 3;
             string sql = $@"
 update parcel_event
 set is_deleted=1
@@ -245,7 +244,7 @@ insert into parcel_event
 values 
 (
 '{created_at}'
-,{event_type}
+,3
 ,{parcel_uid}
 ,{owner_uid}
 ,(select room_name from ryosei where uid={owner_uid})
@@ -263,10 +262,50 @@ values
 update parcels
 set is_deleted=1
 where uid={parcel_uid}";
+            if (event_type == 2)
+            {
+                sql = $@"
+update [parcels] 
+set 
+is_released = 0
+,release_datetime=NULL
+,release_staff_uid = NULL
+,release_staff_room_name=NULL
+,release_staff_ryosei_name=NULL
+where uid ={parcel_uid}
+";
+            }
             return sql;
         }
-
+        /*        public string toDeleteLogically_parcels_table()
+        {
+            string sql = $@"
+update parcels
+set is_deleted=1
+where uid={parcel_uid}";
+            return sql;
+        }*/
         public string toDeleteLoogically_ryosei_table()
+        {
+            string sql = $@"
+update ryosei
+set 
+parcels_total_count=(select parcels_total_count from ryosei where uid={owner_uid})-1
+,parcels_current_count=(select parcels_current_count from ryosei where uid={owner_uid})-1
+where uid={owner_uid}
+";
+            if (event_type == 2)
+            {
+                sql = $@"update ryosei
+set 
+parcels_total_count=(select parcels_total_count from ryosei where uid={owner_uid})+1
+,parcels_current_count=(select parcels_current_count from ryosei where uid={owner_uid})+1
+where uid={owner_uid}
+";
+            }
+            return sql;
+        }
+        /*public string toDeleteLoogically_ryosei_table()
         {
             string sql = $@"
 DECLARE @event_type INT =(select event_type from parcel_event where uid = {event_uid})
@@ -288,7 +327,7 @@ where uid={owner_uid}
 end
 ";
             return sql;
-        }
+        }*/
 
         public string toChangeStaff_event_table()
         {
