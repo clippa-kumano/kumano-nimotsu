@@ -35,8 +35,9 @@ namespace RegisterParcelsFromPC
             }
         }
 
-        public List<int> get_all_current_parcel(string sqlstr)
-        {//ある寮生名義の事務室にある荷物の荷物番号を取得しList<int>で返す
+        public List<int> get_all_uid(string sqlstr)
+        {//受取時：ある寮生名義の事務室にある荷物の荷物番号をすべて取得しList<int>で返す
+         //定期チェック時：削除可能なイベントのuidをすべて取得しListで返す
             List<int> CurrentParcels = new List<int>();
             SqlConnection con = new SqlConnection(connStr);
             con.Open();

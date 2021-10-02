@@ -23,7 +23,14 @@ namespace RegisterParcelsFromPC
         Color color_register = Color.FromArgb(218, 255, 245);
         Color color_release = Color.FromArgb(217, 255, 218);
         Color color_delete = Color.FromArgb(255, 216, 216);
+        Color color_deletable = Color.FromArgb(255, 240, 240);
+
         Color color_night_duty_mode = Color.Lavender;
+
+        List<int> deletable_event_uid;
+        int deletable_seconds = 300;
+
+        int test = 0;
 
         public Form1()
         {
@@ -177,20 +184,26 @@ namespace RegisterParcelsFromPC
             //Rows.Count-1が大事
             for (int row = 0; row < dataGridView2.Rows.Count - 1; row++)
             {
-                string col = dataGridView2.Rows[row].Cells[0].Value.ToString();
-                if (col == "登録")
+                string event_type = dataGridView2.Rows[row].Cells[0].Value.ToString();
+                string is_finished = dataGridView2.Rows[row].Cells[8].Value.ToString();
+                if (event_type == "登録")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_register;
                 }
-                if (col == "受取")
+                if (event_type == "受取")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_release;
                 }
-                if (col == "削除")
+                if (is_finished == "False" && (event_type == "登録" || event_type == "受取"))
+                {
+                    dataGridView2.Rows[row].Cells[1].Style.BackColor = color_deletable;
+
+                }
+                if (event_type == "削除")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_delete;
                 }
-                if (col == "モード解除" || col == "モード開始")
+                if (event_type == "モード解除" || event_type == "モード開始")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_night_duty_mode;
                 }
@@ -270,7 +283,7 @@ namespace RegisterParcelsFromPC
 
             string sqlstr_get_all_current_parcel = sqlstr.toRelease_get_all_parcels();
             Operation ope = new Operation(connStr);
-            List<int> CurrentParcels = ope.get_all_current_parcel(sqlstr_get_all_current_parcel);
+            List<int> CurrentParcels = ope.get_all_uid(sqlstr_get_all_current_parcel);
             //現状はその人名義の荷物をすべて取得している
             //ここを書き換えれば、荷物を選択とかできると思うけど、今のままにしておいてすべて受け取らせて必要があればイベント削除、とかの運用のほうが良いと思う。
 
@@ -339,6 +352,7 @@ namespace RegisterParcelsFromPC
                 }
             }
         }
+
         void delete(string event_type, int event_uid,int ryosei_uid, int parcel_uid, string room_name, string ryosei_name, string is_finished)
         {
             //when 1 then '登録' when 2 then '受取' when 3 then '削除' when 10 then '当番交代' when 11 then 'モード開始' when 12 then 'モード解除'  else 'その他'
@@ -429,6 +443,32 @@ namespace RegisterParcelsFromPC
             }
 
         }
+
+        void periodical_check()
+        {
+            //10秒に一度呼ばれる
+            //deletable_eventを更新する
+            //具体的に言うと、登録もしくは受取イベントで、is_finishedが0であり、5分以上経過しているイベントのis_finishedを1にする
+
+            MakeSQLCommand sqlstr = new MakeSQLCommand();
+            DateTime dt = DateTime.Now;
+            dt=dt.AddSeconds(-1 * deletable_seconds);
+            string base_time = dt.ToString("yyyy-MM-dd HH:mm:ss");
+            sqlstr.created_at = base_time;
+            string getlist_periodicCheck = sqlstr.toGetList_PeriodicCheck();//更新対象の一覧を取得
+            string sqlstr_periodicCheck = sqlstr.toPeriodicCheck();//実際のupdate文
+
+            Operation ope = new Operation(connStr);
+            List<int> target_uid=ope.get_all_uid(getlist_periodicCheck);//先に更新対象の一覧を種痘
+            ope.execute_sql(sqlstr_periodicCheck);//update文をかます
+            //更新対象があったときのみ、イベントテーブルを再描画
+            if (target_uid.Count > 0)
+            {
+                show_parcels_eventTable();
+            }
+
+        }
+
         void change_blockTabImage(int n)
         {
 
@@ -545,7 +585,7 @@ namespace RegisterParcelsFromPC
 
         private void button2_Click(object sender, EventArgs e)
         {
-
+            periodical_check();
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -574,6 +614,14 @@ namespace RegisterParcelsFromPC
         private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            periodical_check();
+            show_parcels_eventTable();
+            test++;
+            textBox4.Text = test.ToString();
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)

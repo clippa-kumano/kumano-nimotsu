@@ -212,7 +212,7 @@ values
 update [parcel_event] 
 set
 is_finished=1
-where parcel_uid={aParcelID}
+where parcel_uid={aParcelID} and event_type=1
 ";
             }
             return sql;
@@ -388,6 +388,26 @@ and room_name = '{room_name}'
 ";
             return sql;
         }
+
+        public string toPeriodicCheck()
+        {
+            string sql = $@"
+update parcel_event 
+set is_finished=1 
+where event_type<=2 and is_finished=0 and created_at<'{created_at}'
+";
+            return sql;
+        }
+        public string toGetList_PeriodicCheck()
+        {
+            string sql = $@"
+select uid 
+from parcel_event
+where event_type<=2 and is_finished=0 and created_at<'{created_at}'
+";
+            return sql;
+        }
+        
 
     }
 }
