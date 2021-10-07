@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".Buttoned_Touroku">
 
     <LinearLayout
         android:id="@+id/linearLayout2"
@@ -56,7 +57,7 @@
     </LinearLayout>
 
     <ListView
-        android:id="@+id/ryousei_list_show"
+        android:id="@+id/touroku_ryousei_list_show"
         android:layout_width="850dp"
         android:layout_height="660dp"
         android:layout_marginStart="90dp"
@@ -72,6 +73,16 @@
         android:layout_marginTop="111dp"
         android:text="戻る"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ryousei_list_show" />
+        app:layout_constraintTop_toBottomOf="@+id/touroku_ryousei_list_show" />
+
+    <TextView
+        android:id="@+id/jimutou_name_show"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="283dp"
+        android:layout_marginTop="56dp"
+        android:text="TextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/touroku_ryousei_list_show" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

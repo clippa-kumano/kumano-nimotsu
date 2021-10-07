@@ -40,93 +40,34 @@
         app:layout_constraintTop_toBottomOf="@+id/textView"
         tools:ignore="SpeakableTextPresentCheck" />
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="700dp"
-        android:layout_height="176dp"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="50dp"
-        android:orientation="vertical"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/image_button_touroku">
-
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/log_sample1" />
-
-        <TextView
-            android:id="@+id/textView3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/log_sample2" />
-
-        <TextView
-            android:id="@+id/textView4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/log_sample3" />
-
-        <TextView
-            android:id="@+id/textView5"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/log_sample4" />
-
-        <TextView
-            android:id="@+id/textView6"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/log_sample5" />
-
-        <TextView
-            android:id="@+id/textView7"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/log_sample6" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/textView8"
+    <Button
+        android:id="@+id/jimuto_change_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="95dp"
-        android:layout_marginTop="15dp"
-        android:text="荷物登録受取ログ"
+        android:layout_marginStart="63dp"
+        android:layout_marginTop="314dp"
+        android:text="jimutou_change"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/image_button_touroku" />
 
-    <Button
-        android:id="@+id/kumanotouroku"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="132dp"
-        android:layout_marginTop="52dp"
-        android:text="A101熊野の荷物登録"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
-
-    <Button
-        android:id="@+id/kumanouketori"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="88dp"
-        android:layout_marginTop="52dp"
-        android:text="A101熊野の荷物受取"
-        app:layout_constraintStart_toEndOf="@+id/kumanotouroku"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="275dp"
+        android:layout_height="35dp"
+        android:layout_marginStart="76dp"
+        android:layout_marginTop="317dp"
+        android:text="ただいまの事務当番は、"
+        app:layout_constraintStart_toEndOf="@+id/jimuto_change_button"
+        app:layout_constraintTop_toBottomOf="@+id/image_button_touroku" />
 
     <TextView
-        android:id="@+id/NimotuJoutai"
-        android:layout_width="1079dp"
-        android:layout_height="75dp"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="30dp"
-        android:inputType="textMultiLine"
-
-        android:text="none\nnone"
+        android:id="@+id/main_jimutou_show"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="322dp"
+        android:layout_marginTop="32dp"
+        android:text="TextView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/kumanotouroku" />
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
