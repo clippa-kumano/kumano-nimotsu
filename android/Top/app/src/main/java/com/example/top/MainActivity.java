@@ -13,18 +13,20 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int JIMUTOCHANGE_ACTIVITY = 1001;
     String jimuto_room = "";
     String jimuto_name = "";
-    String jimuto_id = "";
+    String jimuto_id = null;
 
     private DatabaseHelper _helper;
 
@@ -64,21 +66,32 @@ public class MainActivity extends AppCompatActivity {
     private class TourokuListener implements View.OnClickListener {
         @Override
         public void onClick(View view) {
-
-            Intent intent = new Intent(MainActivity.this, Buttoned_Touroku.class);
-
-            intent.putExtra("Jimuto_id", jimuto_id);
-            intent.putExtra("Jimuto_room", jimuto_room);
-            intent.putExtra("Jimuto_name", jimuto_name);
-            startActivity(intent);
+            if (jimuto_id == null) {
+                String show = "先に事務当番を設定してください。";
+                Toast.makeText(MainActivity.this, show ,Toast.LENGTH_LONG).show();
+            } else{
+                Intent intent = new Intent(MainActivity.this, Buttoned_Touroku.class);
+                intent.putExtra("Jimuto_id", jimuto_id);
+                intent.putExtra("Jimuto_room", jimuto_room);
+                intent.putExtra("Jimuto_name", jimuto_name);
+                startActivity(intent);
+        }
         }
     }
 
     private class UketoriListener implements  View.OnClickListener {
         @Override
         public void onClick(View view){
-            Intent intent = new Intent(MainActivity.this, Nimotsu_show.class);
-            startActivity(intent);
+            if (jimuto_id == null) {
+                String show = "先に事務当番を設定してください。";
+                Toast.makeText(MainActivity.this, show ,Toast.LENGTH_LONG).show();
+            } else {
+                Intent intent = new Intent(MainActivity.this, Buttoned_Uketori.class);
+                intent.putExtra("Jimuto_id", jimuto_id);
+                intent.putExtra("Jimuto_room", jimuto_room);
+                intent.putExtra("Jimuto_name", jimuto_name);
+                startActivity(intent);
+            }
         }
 
     }
