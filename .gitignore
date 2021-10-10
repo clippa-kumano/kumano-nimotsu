@@ -87,3 +87,6 @@ lint/tmp/
 #android environment (20211006)
 android/Top/app/.idea/
 android/Top/app/src/main.zip
+
+RegisterParcelFromPC/.vs/
+RegisterParcelFromPC/obj/
