@@ -88,5 +88,5 @@ lint/tmp/
 android/Top/app/.idea/
 android/Top/app/src/main.zip
 
-RegisterParcelFromPC/.vs/
-RegisterParcelFromPC/obj/
+RegisterParcelsFromPC/.vs/
+RegisterParcelsFromPC/obj/
