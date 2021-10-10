@@ -158,6 +158,13 @@ namespace RegisterParcelsFromPC
 
 
             }
+            finally
+            {
+
+                //閉じる
+                sr.Close();
+
+            }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
