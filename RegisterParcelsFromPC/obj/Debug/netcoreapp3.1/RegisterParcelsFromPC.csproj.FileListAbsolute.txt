@@ -98,3 +98,4 @@ C:\Users\clipp\Desktop\working\kmntest\kumano-nimotsu\RegisterParcelsFromPC\obj\
 C:\Users\clipp\Desktop\working\kmntest\kumano-nimotsu\RegisterParcelsFromPC\obj\Debug\netcoreapp3.1\RegisterParcelsFromPC.dll
 C:\Users\clipp\Desktop\working\kmntest\kumano-nimotsu\RegisterParcelsFromPC\obj\Debug\netcoreapp3.1\RegisterParcelsFromPC.pdb
 C:\Users\clipp\Desktop\working\kmntest\kumano-nimotsu\RegisterParcelsFromPC\obj\Debug\netcoreapp3.1\RegisterParcelsFromPC.genruntimeconfig.cache
+C:\Users\clipp\Desktop\working\kmntest\kumano-nimotsu\RegisterParcelsFromPC\bin\Debug\netcoreapp3.1\Newtonsoft.Json.dll
