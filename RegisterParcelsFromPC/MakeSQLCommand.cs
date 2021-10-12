@@ -99,6 +99,13 @@ order by uid desc
             return sql;
 
         }
+        public string forShow_confirm_msgbox(int uid)
+        {
+            string sql = $@"
+select * from parcels where uid = {uid}
+";
+            return sql;
+        }
 
         public string toRegister_parcels_table()//
         {
@@ -285,7 +292,7 @@ set is_deleted=1
 where uid={parcel_uid}";
             return sql;
         }*/
-        public string toDeleteLoogically_ryosei_table()
+        public string toDeleteLogically_ryosei_table()
         {
             string sql = $@"
 update ryosei

@@ -342,7 +342,7 @@ namespace RegisterParcelsFromPC
 
                     string sqlstr = "";
                     sqlstr += makeSQLCommand.toDeleteLogically_event_table();
-                    sqlstr += makeSQLCommand.toDeleteLoogically_ryosei_table();
+                    sqlstr += makeSQLCommand.toDeleteLogically_ryosei_table();
                     sqlstr += makeSQLCommand.toDeleteLogically_parcels_table();
                     Operation ope = new Operation(connStr);
                     ope.execute_sql(sqlstr);
@@ -359,8 +359,18 @@ namespace RegisterParcelsFromPC
             //MakaSQLCommandのforShow_event_table()部分を参照する
             //enumとかを使ってエレガントにしたさもある
 
-            //削除ができるのは、受取がされていない登録(eventのis_finished=0のもの）と、受取イベント。
-            //過去に受取が一度されたが削除された場合→現在は登録イベントを取り消せないようにしておく
+            //登録、削除のイベントを押すと登録されている情報が見られる。
+            //見られる情報は以下の通り
+            //部屋番号・氏名・荷物の種類(placement,fragile)・登録された時間・受取された時間・紛失情報・特記事項
+
+            //is_finishedフラグについて
+            //目的は、削除ができるかできないかを管理するフラグ。
+            //デフォルトはFalse:0で、以下の条件を満たしたらTrue:1になる
+            //・そのイベントが発生してから5分が経過したとき
+            //・登録イベントが受取されたとき。
+
+            //if (is_finished == "True") return;
+
             if (event_type == "当番交代") return;
             if (event_type == "モード開始") return;
             if (event_type == "モード終了") return;
@@ -369,22 +379,58 @@ namespace RegisterParcelsFromPC
 
             //ここで5分以内かどうかを判定
 
+            string placement, fragile, register_datetime, release_datetime, is_lost, note;
+            using (var conn = new SqlConnection(connStr))
+            {
+                var cmd = conn.CreateCommand();
+                MakeSQLCommand sqlstr = new MakeSQLCommand();
+                cmd.CommandText = sqlstr.forShow_confirm_msgbox(parcel_uid);
+                conn.Open();
+                using (SqlDataReader dr = cmd.ExecuteReader()) {
+                    dr.Read();
+                    placement = dr["placement"].ToString();
+                    fragile = dr["fragile"].ToString();
+                    register_datetime = dr["register_datetime"].ToString();
+                    release_datetime = dr["release_datetime"].ToString();
+                    is_lost = dr["is_lost"].ToString();
+                    note = dr["note"].ToString();
 
+                }
 
-            //ダイアログを出す（一度目）
+            }
+            //fragileとかplacementあたりは変換しなければならない
+
+            //ダイアログに表示される文章を作成
+            string delete_kakunin = "";
+            if (is_finished == "False")
+            {
+                delete_kakunin = $"\r\n\r\n#{event_uid} の操作を取り消しますか？";
+            }
+            string msgbox_str = $@"
+部屋番号/氏名 : {room_name}  {ryosei_name}
+登録された時間 : {register_datetime}
+受取された時間 : {release_datetime}
+荷物の種類     : {fragile}&{placement} 
+紛失情報       : {is_lost}
+特記事項       : {note}
+{delete_kakunin}
+";
+            //ダイアログを出す（一段階目）
             DialogResult result;
-            string msgbox_str = $@"#{event_uid} の操作を取り消しますか？";
-            result = MessageBox.Show(msgbox_str, "boxTitle", MessageBoxButtons.OKCancel);
+            if (is_finished == "False")
+            {
+                result = MessageBox.Show(msgbox_str, "boxTitle", MessageBoxButtons.YesNo);
 
-            if (result == DialogResult.OK)
+            }
+            else
+            {
+                result = MessageBox.Show(msgbox_str, "boxTitle", MessageBoxButtons.OK);
+            }
+
+            if (result == DialogResult.Yes)
             {
                 //ここで、登録イベントであり過去に受取がされていれば処理を終了する
 
-                if (event_type == "登録" && is_finished == "True")
-                {
-                    MessageBox.Show("この荷物は過去に受取されているため、イベントを削除できません", "boxTitle", MessageBoxButtons.OK);
-                    return;
-                }
 
                 //ダイアログを出す（二度目）
                 DialogResult result2;
@@ -408,7 +454,7 @@ namespace RegisterParcelsFromPC
 
                     string sqlstr = "";
                     sqlstr += makeSQLCommand.toDeleteLogically_event_table();
-                    sqlstr += makeSQLCommand.toDeleteLoogically_ryosei_table();
+                    sqlstr += makeSQLCommand.toDeleteLogically_ryosei_table();
                     sqlstr += makeSQLCommand.toDeleteLogically_parcels_table();
                     Operation ope = new Operation(connStr);
                     ope.execute_sql(sqlstr);
@@ -621,7 +667,6 @@ namespace RegisterParcelsFromPC
             periodical_check();
             show_parcels_eventTable();
             test++;
-            textBox4.Text = test.ToString();
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
