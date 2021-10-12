@@ -83,3 +83,13 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+
+# C#環境依存ファイル
+RegisterParcelsFromPC/.vs/RegisterParcelsFromPC/DesignTimeBuild/.dtbcache.v2
+RegisterParcelsFromPC/.vs/RegisterParcelsFromPC/v16/.suo
+RegisterParcelsFromPC/Form1.Designer.cs
+RegisterParcelsFromPC/Form1.resx
+RegisterParcelsFromPC/obj/Debug/netcoreapp3.1/RegisterParcelsFromPC.csproj.AssemblyReference.cache
+RegisterParcelsFromPC/obj/Debug/netcoreapp3.1/RegisterParcelsFromPC.csproj.GenerateResource.cache
+RegisterParcelsFromPC/obj/Debug/netcoreapp3.1/RegisterParcelsFromPC.dll
+RegisterParcelsFromPC/obj/Debug/netcoreapp3.1/RegisterParcelsFromPC.pdb
