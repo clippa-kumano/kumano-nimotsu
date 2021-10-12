@@ -15,15 +15,22 @@ namespace RegisterParcelsFromPC
     {
         string connStr = @"Server=.\SQLEXPRESS;Initial Catalog=parcels;UID=sa;PWD=kumano";
         int ryoseiTable_block = 1;
-        int staff_uid=0;
+        int staff_uid = 0;
         int night_duty_mode = 0;
-        string staff_ryosei_name="", staff_ryosei_room="";
+        string staff_ryosei_name = "", staff_ryosei_room = "";
 
 
         Color color_register = Color.FromArgb(218, 255, 245);
         Color color_release = Color.FromArgb(217, 255, 218);
         Color color_delete = Color.FromArgb(255, 216, 216);
+        Color color_deletable = Color.FromArgb(255, 240, 240);
+
         Color color_night_duty_mode = Color.Lavender;
+
+        List<int> deletable_event_uid;
+        int deletable_seconds = 300;
+
+        int test = 0;
 
         public Form1()
         {
@@ -56,30 +63,48 @@ namespace RegisterParcelsFromPC
                 //
                 // クリックがヘッダー部分などの場合はインデックスが-1となります。
                 //ryosei table col 0:部屋番号、1:氏名、2:荷物数、3:登録、4:受取、5:slack_id, 6:ryosei_uid
-                //event table  col 0:イベント種類、1:uid、2:部屋番号, 3:氏名、4:時刻、5:note、6:parcel_uid,7:ryosei_uid,8:is_finished
-                if (row >= 0 && col == 1 && boxTitle == "left_side")//事務当の登録
+                //event table  col 0:イベント種類、1:uid、2:部屋番号, 3:氏名、4:時刻、5:note、6:parcel_uid,7:ryosei_uid,8:is_finished("True"もしくは"False"で渡される）
+                if (boxTitle == "left_side")
                 {
-                    change_staff(int.Parse(g[6, row].Value.ToString()), g[0, row].Value.ToString(), g[1, row].Value.ToString());
-                }
-                if (row >= 0 && col == 3&& boxTitle=="left_side")//荷物の登録
-                {
+                    string room_name = g[0, row].Value.ToString();
+                    string ryosei_name = g[1, row].Value.ToString();
+                    int current_parcel_count = int.Parse(g[2, row].Value.ToString());
+                    string slack_id = g[5, row].Value.ToString();
+                    int ryosei_uid = int.Parse(g[6, row].Value.ToString());
 
-                    register(int.Parse(g[6, row].Value.ToString()),staff_uid,g[1, row].Value.ToString(), g[0, row].Value.ToString(), g[5, row].Value.ToString());
-                    
-                }
-                if (row >= 0 && col == 4&& boxTitle == "left_side"&& int.Parse(g[2, row].Value.ToString())>0)//受取
-                {
-                    release(int.Parse(g[6, row].Value.ToString()),staff_uid, g[1, row].Value.ToString(), g[0, row].Value.ToString());
-                    //result = MessageBox.Show(string.Format("行：{0}, 列：{1}, 値：{2}", row, col, g[col, row].Value), boxTitle, MessageBoxButtons.OKCancel);
-                }
-                if (row >= 0 && col >=0 &&boxTitle == "right_top_side")
-                {
-                    string test = g[8, row].Value.ToString();
-                        if (g[8, row].Value.ToString() != "True" &&  g[0, row].Value.ToString() != "その他")//既に受け取られた登録イベントは削除できない/事務当登録イベントは削除できない
+                    if (row >= 0 && col == 1)//事務当の登録
                     {
-                        confirm(g[1, row].Value.ToString(), g[7, row].Value.ToString(), g[6, row].Value.ToString(), g[2, row].Value.ToString(), g[3, row].Value.ToString());
+                        change_staff(ryosei_uid, room_name, ryosei_name);
+                    }
+                    if (row >= 0 && col == 3)//荷物の登録
+                    {
+
+                        register(ryosei_uid, staff_uid, ryosei_name, room_name, slack_id);
 
                     }
+                    if (row >= 0 && col == 4 && int.Parse(g[2, row].Value.ToString()) > 0)//受取
+                    {
+                        release(ryosei_uid, staff_uid, ryosei_name, room_name);
+                        //result = MessageBox.Show(string.Format("行：{0}, 列：{1}, 値：{2}", row, col, g[col, row].Value), boxTitle, MessageBoxButtons.OKCancel);
+                    }
+                }
+
+
+                if (row >= 0 && col >= 0 && boxTitle == "right_top_side")
+                {//イベント削除のイベント。分岐がややこしいので、関数の中で分岐するように変更したい。
+
+                    string event_type = g[0, row].Value.ToString();
+                    int event_uid = int.Parse(g[1, row].Value.ToString());
+                    string room_name = g[2, row].Value.ToString();
+                    string ryosei_name = g[3, row].Value.ToString();
+                    int parcel_uid = int.Parse(g[6, row].Value.ToString());
+                    int ryosei_uid = int.Parse(g[7, row].Value.ToString());
+                    string is_finished = g[8, row].Value.ToString();//TrueまたはFalse
+
+
+                    delete(event_type, event_uid, ryosei_uid, parcel_uid, room_name, ryosei_name, is_finished);
+
+                    
                 }
 
 
@@ -101,7 +126,8 @@ namespace RegisterParcelsFromPC
                 var cmd = conn.CreateCommand();
                 MakeSQLCommand sqlstr = new MakeSQLCommand();
                 sqlstr.block_id = ryoseiTable_block;
-                if (night_duty_mode==0) {
+                if (night_duty_mode == 0)
+                {
                     cmd.CommandText = sqlstr.forShow_ryosei_table();
                 }
                 else
@@ -128,7 +154,7 @@ namespace RegisterParcelsFromPC
 
 
         }
-        
+
         void show_parcels_eventTable()
         {
             var dt = new DataTable();
@@ -155,23 +181,29 @@ namespace RegisterParcelsFromPC
 
 
             //各行に色を付ける処理
-               //Rows.Count-1が大事
-            for (int row = 0; row < dataGridView2.Rows.Count-1; row++)
+            //Rows.Count-1が大事
+            for (int row = 0; row < dataGridView2.Rows.Count - 1; row++)
             {
-                string col = dataGridView2.Rows[row].Cells[0].Value.ToString();
-                if (col == "登録")
+                string event_type = dataGridView2.Rows[row].Cells[0].Value.ToString();
+                string is_finished = dataGridView2.Rows[row].Cells[8].Value.ToString();
+                if (event_type == "登録")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_register;
                 }
-                if (col == "受取")
+                if (event_type == "受取")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_release;
                 }
-                if (col == "削除")
+                if (is_finished == "False" && (event_type == "登録" || event_type == "受取"))
+                {
+                    dataGridView2.Rows[row].Cells[1].Style.BackColor = color_deletable;
+
+                }
+                if (event_type == "削除")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_delete;
                 }
-                if (col == "モード解除" || col == "モード開始")
+                if (event_type == "モード解除" || event_type == "モード開始")
                 {
                     dataGridView2.Rows[row].Cells[0].Style.BackColor = color_night_duty_mode;
                 }
@@ -180,7 +212,7 @@ namespace RegisterParcelsFromPC
         }
 
 
-        void register(int owner_uid, int staff_uid, string ryosei_name, string room_name,string slack_id)
+        void register(int owner_uid, int staff_uid, string ryosei_name, string room_name, string slack_id)
         {
             if (staff_uid == 0)
             {
@@ -249,15 +281,15 @@ namespace RegisterParcelsFromPC
             MakeSQLCommand sqlstr = new MakeSQLCommand();
             sqlstr.owner_uid = owner_uid;
 
-            string sqlstr_get_all_current_parcel= sqlstr.toRelease_get_all_parcels();
+            string sqlstr_get_all_current_parcel = sqlstr.toRelease_get_all_parcels();
             Operation ope = new Operation(connStr);
-            List<int> CurrentParcels = ope.get_all_current_parcel(sqlstr_get_all_current_parcel);
+            List<int> CurrentParcels = ope.get_all_uid(sqlstr_get_all_current_parcel);
             //現状はその人名義の荷物をすべて取得している
             //ここを書き換えれば、荷物を選択とかできると思うけど、今のままにしておいてすべて受け取らせて必要があればイベント削除、とかの運用のほうが良いと思う。
 
             sqlstr.release_datetime = dt.ToString();
             sqlstr.release_staff_uid = staff_uid;
-            sqlstr.parcels_total_waittime = ope.calculate_registered_time(CurrentParcels, dt,owner_uid);
+            sqlstr.parcels_total_waittime = ope.calculate_registered_time(CurrentParcels, dt, owner_uid);
             string aSqlStr = "";
             aSqlStr += sqlstr.toRelease_parcels_table(CurrentParcels);
             aSqlStr += sqlstr.toRelease_parcelevent_table(CurrentParcels);
@@ -278,7 +310,7 @@ namespace RegisterParcelsFromPC
             }
 
         }
-        void confirm(string event_uid_str, string ryosei_uid_str, string parcel_uid_str,string room_name, string ryosei_name)
+        void confirm(string event_type, string event_uid_str, string ryosei_uid_str, string parcel_uid_str, string room_name, string ryosei_name)
         {
             DialogResult result;
             string msgbox_str = $@"#{event_uid_str} の操作を取り消しますか？";
@@ -305,6 +337,8 @@ namespace RegisterParcelsFromPC
                     makeSQLCommand.event_uid = event_uid;
                     makeSQLCommand.parcel_uid = parcel_uid;
                     makeSQLCommand.owner_uid = ryosei_uid;
+                    if (event_type == "登録") makeSQLCommand.event_type = 1;
+                    if (event_type == "受取") makeSQLCommand.event_type = 2;
 
                     string sqlstr = "";
                     sqlstr += makeSQLCommand.toDeleteLogically_event_table();
@@ -319,6 +353,71 @@ namespace RegisterParcelsFromPC
             }
         }
 
+        void delete(string event_type, int event_uid,int ryosei_uid, int parcel_uid, string room_name, string ryosei_name, string is_finished)
+        {
+            //when 1 then '登録' when 2 then '受取' when 3 then '削除' when 10 then '当番交代' when 11 then 'モード開始' when 12 then 'モード解除'  else 'その他'
+            //MakaSQLCommandのforShow_event_table()部分を参照する
+            //enumとかを使ってエレガントにしたさもある
+
+            //削除ができるのは、受取がされていない登録(eventのis_finished=0のもの）と、受取イベント。
+            //過去に受取が一度されたが削除された場合→現在は登録イベントを取り消せないようにしておく
+            if (event_type == "当番交代") return;
+            if (event_type == "モード開始") return;
+            if (event_type == "モード終了") return;
+            if (event_type == "削除") return;
+
+
+            //ここで5分以内かどうかを判定
+
+
+
+            //ダイアログを出す（一度目）
+            DialogResult result;
+            string msgbox_str = $@"#{event_uid} の操作を取り消しますか？";
+            result = MessageBox.Show(msgbox_str, "boxTitle", MessageBoxButtons.OKCancel);
+
+            if (result == DialogResult.OK)
+            {
+                //ここで、登録イベントであり過去に受取がされていれば処理を終了する
+
+                if (event_type == "登録" && is_finished == "True")
+                {
+                    MessageBox.Show("この荷物は過去に受取されているため、イベントを削除できません", "boxTitle", MessageBoxButtons.OK);
+                    return;
+                }
+
+                //ダイアログを出す（二度目）
+                DialogResult result2;
+                string msgbox_str2 = $@"一度取り消した操作は元に戻すことは出来ません。
+#{event_uid} の操作を取り消します。
+よろしいですか？";
+                result2 = MessageBox.Show(msgbox_str2, "boxTitle", MessageBoxButtons.OKCancel);
+
+                if (result2 == DialogResult.OK)
+                { 
+
+                    MakeSQLCommand makeSQLCommand = new MakeSQLCommand();
+                    if (event_type == "登録") makeSQLCommand.event_type = 1;
+                    if (event_type == "受取") makeSQLCommand.event_type = 2;
+
+                    //{created_at}',{event_type},{parcel_uid},'{owner_room_name}','{owner_ryosei_name}
+                    makeSQLCommand.created_at = DateTime.Now.ToString();
+                    makeSQLCommand.event_uid = event_uid;
+                    makeSQLCommand.parcel_uid = parcel_uid;
+                    makeSQLCommand.owner_uid = ryosei_uid;
+
+                    string sqlstr = "";
+                    sqlstr += makeSQLCommand.toDeleteLogically_event_table();
+                    sqlstr += makeSQLCommand.toDeleteLoogically_ryosei_table();
+                    sqlstr += makeSQLCommand.toDeleteLogically_parcels_table();
+                    Operation ope = new Operation(connStr);
+                    ope.execute_sql(sqlstr);
+
+                    show_parcels_eventTable();
+                    show_ryoseiTable();
+                }
+            }
+        }
         void change_staff(int ryosei_uid, string room_name, string ryosei_name)
         {
             DialogResult result;
@@ -344,6 +443,32 @@ namespace RegisterParcelsFromPC
             }
 
         }
+
+        void periodical_check()
+        {
+            //10秒に一度呼ばれる
+            //deletable_eventを更新する
+            //具体的に言うと、登録もしくは受取イベントで、is_finishedが0であり、5分以上経過しているイベントのis_finishedを1にする
+
+            MakeSQLCommand sqlstr = new MakeSQLCommand();
+            DateTime dt = DateTime.Now;
+            dt=dt.AddSeconds(-1 * deletable_seconds);
+            string base_time = dt.ToString("yyyy-MM-dd HH:mm:ss");
+            sqlstr.created_at = base_time;
+            string getlist_periodicCheck = sqlstr.toGetList_PeriodicCheck();//更新対象の一覧を取得
+            string sqlstr_periodicCheck = sqlstr.toPeriodicCheck();//実際のupdate文
+
+            Operation ope = new Operation(connStr);
+            List<int> target_uid=ope.get_all_uid(getlist_periodicCheck);//先に更新対象の一覧を種痘
+            ope.execute_sql(sqlstr_periodicCheck);//update文をかます
+            //更新対象があったときのみ、イベントテーブルを再描画
+            if (target_uid.Count > 0)
+            {
+                show_parcels_eventTable();
+            }
+
+        }
+
         void change_blockTabImage(int n)
         {
 
@@ -357,7 +482,7 @@ namespace RegisterParcelsFromPC
             ("RegisterParcelsFromPC.Properties.Resources", assembly);
 
             //指定されたリソースにインポートした画像を読み込む
-            
+
 
             Bitmap A1 = (Bitmap)rm.GetObject("tab_a1");
             Bitmap A2 = (Bitmap)rm.GetObject("tab_a2");
@@ -393,46 +518,46 @@ namespace RegisterParcelsFromPC
         private void pictureBox1_Click(object sender, EventArgs e)
         {
 
-                ryoseiTable_block = 1;
-                show_ryoseiTable();
-                change_blockTabImage(1);
+            ryoseiTable_block = 1;
+            show_ryoseiTable();
+            change_blockTabImage(1);
 
-            
+
         }
 
         private void pictureBox2_Click(object sender, EventArgs e)
         {
- 
-                ryoseiTable_block = 2;
-                show_ryoseiTable();
-                change_blockTabImage(2);
-            
+
+            ryoseiTable_block = 2;
+            show_ryoseiTable();
+            change_blockTabImage(2);
+
 
         }
 
         private void pictureBox3_Click(object sender, EventArgs e)
-        {   
+        {
 
-                ryoseiTable_block = 3;
-                show_ryoseiTable();
-                change_blockTabImage(0);
+            ryoseiTable_block = 3;
+            show_ryoseiTable();
+            change_blockTabImage(0);
 
         }
 
         private void pictureBox4_Click(object sender, EventArgs e)
         {
 
-                ryoseiTable_block = 4;
-                show_ryoseiTable();
-                change_blockTabImage(0);
+            ryoseiTable_block = 4;
+            show_ryoseiTable();
+            change_blockTabImage(0);
 
         }
 
         private void pictureBox5_Click(object sender, EventArgs e)
         {
-                ryoseiTable_block = 5;
-                show_ryoseiTable();
-                change_blockTabImage(0);
+            ryoseiTable_block = 5;
+            show_ryoseiTable();
+            change_blockTabImage(0);
 
         }
 
@@ -460,17 +585,19 @@ namespace RegisterParcelsFromPC
 
         private void button2_Click(object sender, EventArgs e)
         {
-            
+            periodical_check();
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            if (night_duty_mode == 0){
+            if (night_duty_mode == 0)
+            {
                 night_duty_mode = 1;
                 MessageBox.Show("泊事務当確認モード");
                 Change_Mode(11);
             }
-            else {
+            else
+            {
                 night_duty_mode = 0;
                 MessageBox.Show("モード解除");
                 Change_Mode(12);
@@ -487,6 +614,14 @@ namespace RegisterParcelsFromPC
         private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            periodical_check();
+            show_parcels_eventTable();
+            test++;
+            textBox4.Text = test.ToString();
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
