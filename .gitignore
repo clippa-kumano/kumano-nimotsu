@@ -84,6 +84,9 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 
+ 
+
+
 #android environment (20211006)
 android/Top/app/.idea/
 android/Top/app/src/main.zip
@@ -91,3 +94,4 @@ android/Top/app/src/main.zip
 RegisterParcelsFromPC/.vs/
 RegisterParcelsFromPC/obj/
 RegisterParcelsFromPC/obj/
+
