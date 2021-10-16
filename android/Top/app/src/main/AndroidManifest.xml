@@ -13,7 +13,7 @@
             android:name=".Nimotsu_show"
             android:exported="true" />
         <activity
-            android:name=".MainActivity2"
+            android:name=".Buttoned_Uketori"
             android:exported="true" />
         <activity
             android:name=".Jimuto_Change"

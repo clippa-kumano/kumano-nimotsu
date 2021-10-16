@@ -4,9 +4,14 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class DatabaseHelper extends SQLiteOpenHelper {
@@ -275,12 +280,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             String register_staff_uid,
             String register_staff_room_name,
             String register_staff_ryosei_name,
-            int fragile){
+            int placement){
         StringBuilder sb_insert_Parcel = new StringBuilder();
         sb_insert_Parcel.append("insert into parcels (" +
                 "owner_uid,owner_room_name,owner_parcels_name," +
                 "register_datetime," +
-                "register_staff_uid,register_staff_room_name,register_staff_parcels_name" +
+                "register_staff_uid,register_staff_room_name,register_staff_parcels_name,placement" +
                 ") values (");
         sb_insert_Parcel.append( owner_uid +",");
         sb_insert_Parcel.append( " \"" + owner_room +" \",");
@@ -289,15 +294,142 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Date dateObj = new Date();
         SimpleDateFormat format = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
         // 日時情報を指定フォーマットの文字列で取得
-        String display = format.format( dateObj );
-        sb_insert_Parcel.append( " \"" + display +"\",");
+        String string_register_time = format.format( dateObj );
+        sb_insert_Parcel.append( " \"" + string_register_time +"\",");
         sb_insert_Parcel.append( register_staff_uid +",");
         sb_insert_Parcel.append( " \"" + register_staff_room_name +"\",");
-        sb_insert_Parcel.append( " \"" + register_staff_ryosei_name +"\")");
+        sb_insert_Parcel.append( " \"" + register_staff_ryosei_name +"\",");
+        sb_insert_Parcel.append( " \"" + placement +"\")");
 
         String sql_insert_test_parcel = sb_insert_Parcel.toString();
         db.execSQL(sql_insert_test_parcel);
 
+        nimotsuCountAdder(db,owner_uid);
+    }
+
+    public void receiveParcels(
+            SQLiteDatabase db,
+            String owner_id,
+            String parcels_uid,
+            String release_staff_uid,
+            String release_staff_room_name,
+            String release_staff_ryosei_name){
+        // 現在日時情報で初期化されたインスタンスの生成
+        Date dateObj = new Date();
+        SimpleDateFormat format = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
+        // 日時情報を指定フォーマットの文字列で取得
+        String string_register_time = format.format( dateObj );
+        String sql = "UPDATE parcels SET "+
+                " release_staff_uid = " + release_staff_uid + " ," +
+                " release_staff_room_name = '" + release_staff_room_name + "' ," +
+                " release_staff_parcels_name = '" + release_staff_ryosei_name +"' ," +
+                " is_released = " + "1" +" ," +
+                " release_datetime =" + " \"" + string_register_time +"\"" +
+                " WHERE _id =" + parcels_uid;
+        db.execSQL(sql);
+        nimotsuCountSubber(db, owner_id);
+
+    }
+
+    public List<Map<String,String>> nimotsuCountOfRyosei (SQLiteDatabase db, String owner_id){
+        //荷物IDとラベル(日時、受け取り事務当、場所）を返す。
+        List<Map<String,String>> show_owners_parcels = new ArrayList<>();
+        String sql = "SELECT _id, placement, register_datetime," +
+                "register_staff_room_name, register_staff_parcels_name " +
+                "FROM parcels WHERE is_released = 0 AND owner_uid =" + owner_id;
+        Cursor cursor = db.rawQuery(sql, null);
+        while(cursor.moveToNext()){
+            Map<String, String> parcels_raw = new HashMap<>();
+            int index_id = cursor.getColumnIndex("_id");
+            int index_placement = cursor.getColumnIndex("placement");
+            int index_register_datetime = cursor.getColumnIndex("register_datetime");
+            int index_register_staff_room_name = cursor.getColumnIndex("register_staff_room_name");
+            int index_register_staff_parcels_name = cursor.getColumnIndex("register_staff_parcels_name");
+            String rabel = "";
+            String parcels_id = "";
+            parcels_id = String.valueOf(cursor.getInt(index_id));
+            rabel += "登録日時　" + cursor.getString(index_register_datetime);
+            rabel += " ";
+            rabel += "受取事務当　" + cursor.getString(index_register_staff_room_name);
+            rabel += " ";
+            rabel += cursor.getString(index_register_staff_parcels_name);
+            rabel += " ";
+            switch (cursor.getInt(index_placement)){
+                case 0 :
+                    rabel += "普通";
+                    break;
+                case 1 :
+                    rabel += "冷蔵";
+                    break;
+                case 2 :
+                    rabel += "冷凍";
+                    break;
+                case 3 :
+                    rabel += "大型";
+                    break;
+                case 4 :
+                    rabel += "不在票";
+                    break;
+                case 5 :
+                    rabel += "その他";
+                    break;
+            }
+            parcels_raw.put("rabel",rabel);
+            parcels_raw.put("parcels_id",parcels_id);
+            show_owners_parcels.add(parcels_raw);
+        }
+        return show_owners_parcels;
+    }
+
+    public void nimotsuCountAdder( SQLiteDatabase db,String owner_id){
+        int parcels_current_count = 0;
+        int parcels_total_count = 0;
+        //寮生に荷物カウントを追加する。
+
+        //owner_idの寮生を取得
+        String sql = "SELECT parcels_current_count, parcels_total_count FROM ryosei  WHERE _id = "+ owner_id;
+        // SQLの実行。
+        Cursor cursor = db.rawQuery(sql, null);
+
+
+        while(cursor.moveToNext()) {
+            // カラムのインデックス値を取得。
+            int index_parcels_current_count = cursor.getColumnIndex("parcels_current_count");
+            parcels_current_count = cursor.getInt(index_parcels_current_count);
+                    // カラムのインデックス値を元に実際のデータを取得。
+            int index_parcels_total_count = cursor.getColumnIndex("parcels_total_count");
+            parcels_total_count = cursor.getInt(index_parcels_total_count);
+            // カラムのインデックス値を元に実際のデータを取得。
+        }
+        sql = "UPDATE ryosei SET parcels_current_count ="+ String.valueOf(parcels_current_count+1)
+                +", parcels_total_count =" + String.valueOf(parcels_total_count+1) + " WHERE _id =" + owner_id;
+        db.execSQL(sql);
+    }
+
+    public void nimotsuCountSubber( SQLiteDatabase db,String owner_id){
+        int parcels_current_count = 1;
+        //int parcels_total_count = 0;
+        //寮生に荷物カウントを追加する。
+
+        //owner_idの寮生を取得
+        String sql = "SELECT parcels_current_count, parcels_total_count FROM ryosei  WHERE _id = "+ owner_id;
+        // SQLの実行。
+        Cursor cursor = db.rawQuery(sql, null);
+
+
+        while(cursor.moveToNext()) {
+            // カラムのインデックス値を取得。
+            int index_parcels_current_count = cursor.getColumnIndex("parcels_current_count");
+            parcels_current_count = cursor.getInt(index_parcels_current_count);
+            // カラムのインデックス値を元に実際のデータを取得。
+            int index_parcels_total_count = cursor.getColumnIndex("parcels_total_count");
+            //parcels_total_count = cursor.getInt(index_parcels_total_count);
+            // カラムのインデックス値を元に実際のデータを取得。
+            parcels_current_count --;
+        }
+        sql = "UPDATE ryosei SET parcels_current_count ="+ String.valueOf(parcels_current_count)
+                + " WHERE _id =" + owner_id;
+        db.execSQL(sql);
     }
 
     @Override

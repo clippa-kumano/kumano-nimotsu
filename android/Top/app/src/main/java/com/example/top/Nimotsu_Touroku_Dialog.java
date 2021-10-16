@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +20,7 @@ public class Nimotsu_Touroku_Dialog extends DialogFragment {
     String register_staff_room = "";
     String register_staff_id = "";
     private DatabaseHelper _helper;
+    int placement = 0;
 
     @NonNull
     @Override
@@ -38,22 +40,26 @@ public class Nimotsu_Touroku_Dialog extends DialogFragment {
         builder.setTitle(owner_ryosei_room+" "+
                 owner_ryosei_name+" に荷物登録します。")
                 .setPositiveButton("登録", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
+                    public void onClick(DialogInterface dialog, int which) {
                         // このボタンを押した時の処理を書きます。
 
                         _helper = new com.example.top.DatabaseHelper(requireContext());
                         SQLiteDatabase db = _helper.getWritableDatabase();
                         _helper.addParcel(db,owner_ryosei_id,owner_ryosei_room,owner_ryosei_name,
-                          register_staff_id,register_staff_room,register_staff_name,0
+                          register_staff_id,register_staff_room,register_staff_name,placement
                         );
+
+                        String show = "事務当番" + register_staff_room + register_staff_name + "が"+owner_ryosei_room+" "+
+                                owner_ryosei_name+ "に荷物を登録しました。";
+                        Toast.makeText(getActivity(), show ,Toast.LENGTH_LONG).show();
 
                     }
                 })
                 .setNegativeButton("キャンセル", null)
-                .setMultiChoiceItems(choices, choicesChecked, new DialogInterface.OnMultiChoiceClickListener() {
+                .setSingleChoiceItems(choices, 0, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                        choicesChecked[which] = isChecked;
+                    public void onClick(DialogInterface dialog, int which) {
+                    placement = which;
                     }
                 });
 

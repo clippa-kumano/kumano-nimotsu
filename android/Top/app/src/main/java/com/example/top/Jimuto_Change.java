@@ -191,7 +191,6 @@ public class Jimuto_Change extends AppCompatActivity {
 
         public void onItemClick(AdapterView<?> parent, View view, int position, long id){
                 Map<String ,String> item = (Map)parent.getItemAtPosition(position);
-
             this.showDialog(view,item.get("room_name"),item.get("id"));
 
         }
