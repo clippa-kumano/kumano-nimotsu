@@ -21,6 +21,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
+
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int JIMUTOCHANGE_ACTIVITY = 1001;
@@ -49,6 +51,10 @@ public class MainActivity extends AppCompatActivity {
         UketoriListener listener5 = new UketoriListener();
         image_button_uketori.setOnClickListener(listener5);
 
+        Button post_button = findViewById(R.id.post_button);
+        postListener listener6 = new postListener();
+        post_button.setOnClickListener(listener6);
+
 
     }
 
@@ -62,6 +68,18 @@ public class MainActivity extends AppCompatActivity {
         jimuto_show.setText(jimuto_room + " " + jimuto_name);
     }
 
+    private class postListener implements View.OnClickListener{
+        @Override
+        public void onClick(View view){
+            TextView testtext  = findViewById((R.id.textView4));
+            testtext.setText("POSTされました。");
+            OkHttpPost postTask = new OkHttpPost();
+            postTask.execute();
+        }
+    }
+    private void testListener(View view){
+
+    }
 
     private class TourokuListener implements View.OnClickListener {
         @Override
