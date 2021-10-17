@@ -65,4 +65,6 @@ public class Nimotsu_Touroku_Dialog extends DialogFragment {
 
         return builder.create();
     }
+
+
 }

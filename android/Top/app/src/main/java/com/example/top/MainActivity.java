@@ -12,14 +12,22 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
     String jimuto_id = null;
 
     private DatabaseHelper _helper;
+
+    private String [] from ={"id","text"};
+    private int[] to = {android.R.id.text2,android.R.id.text1};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +60,61 @@ public class MainActivity extends AppCompatActivity {
         UketoriListener listener5 = new UketoriListener();
         image_button_uketori.setOnClickListener(listener5);
 
+        eventLogshow();
+        ListView eventLogshower = findViewById(R.id.event_show);
+        eventLogshower.setOnItemClickListener(new EventShowListener());
+
 
     }
+
+
+    public void eventLogshow(){
+        List<Map<String, String>> show_eventlist = new ArrayList<>();
+        _helper = new com.example.top.DatabaseHelper(MainActivity.this);
+        SQLiteDatabase db = _helper.getWritableDatabase();
+        String sql = "SELECT uid, created_at, event_type, parcel_uid, room_name, ryosei_name, target_event_uid FROM parcel_event" ;
+        Cursor cursor = db.rawQuery(sql,null);
+        show_eventlist.clear();
+        while(cursor.moveToNext()) {
+            Map<String, String> event_raw = new HashMap<>();
+            String text = "";
+            int index = cursor.getColumnIndex("uid");
+            String event_id = String.valueOf(cursor.getInt(index));
+            index = cursor.getColumnIndex("created_at");
+            text += cursor.getString(index);
+            index = cursor.getColumnIndex("event_type");
+            int event_type_int = cursor.getInt(index);
+            switch (event_type_int) {
+                case 1://荷物登録
+                    index = cursor.getColumnIndex("room_name");
+                    text += cursor.getString(index);
+                    index = cursor.getColumnIndex("ryosei_name");
+                    text += cursor.getString(index) + " に荷物登録";
+                    break;
+                case 2://荷物受取
+                    index = cursor.getColumnIndex("room_name");
+                    text += cursor.getString(index);
+                    index = cursor.getColumnIndex("ryosei_name");
+                    text += cursor.getString(index) + " が荷物受取";
+                    break;
+            }
+            event_raw.put("id", event_id);
+            event_raw.put("text", text);
+            show_eventlist.add(event_raw);
+        }
+        SimpleAdapter adapter = new SimpleAdapter(
+                this,
+                show_eventlist,
+                android.R.layout.simple_list_item_1,
+                from,
+                to
+        );
+        ListView listView = (ListView)findViewById(R.id.event_show);
+        listView.setAdapter(adapter);
+        ListView listListener = findViewById(R.id.event_show);
+        listListener.setOnItemClickListener(new EventShowListener());
+    }
+
 
     public void onReturnJimutoValue(String value, String id) {
         jimuto_id = id;
@@ -61,6 +125,9 @@ public class MainActivity extends AppCompatActivity {
         TextView jimuto_show = findViewById(R.id.main_jimutou_show);
         jimuto_show.setText(jimuto_room + " " + jimuto_name);
     }
+
+
+
 
 
     private class TourokuListener implements View.OnClickListener {
@@ -78,6 +145,8 @@ public class MainActivity extends AppCompatActivity {
         }
         }
     }
+
+
 
     private class UketoriListener implements  View.OnClickListener {
         @Override
@@ -106,6 +175,58 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(jimuto_intent,JIMUTOCHANGE_ACTIVITY);
         }
     }
+
+    private class EventShowListener implements AdapterView.OnItemClickListener{
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id){
+            String event_id;
+            String created_at;
+            String event_type = null;
+            String parcel_uid;
+            String room_name;
+            String ryosei_name;
+            String target_event_uid;
+            String is_finished;
+            Map<String ,String> item = (Map)parent.getItemAtPosition(position);
+            //TextView configshow = findViewById(R.id.showText);
+            //configshow.setText(item.get("id"));
+            item.get("id");
+            _helper = new com.example.top.DatabaseHelper(MainActivity.this);
+            SQLiteDatabase db = _helper.getWritableDatabase();
+            String sql = "SELECT uid, created_at, event_type, parcel_uid, room_name, ryosei_name, target_event_uid FROM parcel_event WHERE uid = "+
+                    item.get("id");
+            Cursor cursor = db.rawQuery(sql,null);
+            while(cursor.moveToNext()) {
+                int index = cursor.getColumnIndex("uid");
+                event_id = String.valueOf(cursor.getInt(index));
+                index = cursor.getColumnIndex("created_at");
+                created_at = cursor.getString(index);
+                index = cursor.getColumnIndex("event_type");
+                event_type = String.valueOf(cursor.getInt(index));
+                index = cursor.getColumnIndex("parcel_uid");
+                parcel_uid = String.valueOf(cursor.getInt(index));
+                index = cursor.getColumnIndex("room_name");
+                room_name = cursor.getString(index);
+                index = cursor.getColumnIndex("ryosei_name");
+                ryosei_name = cursor.getString(index);
+                index = cursor.getColumnIndex("target_event_uid");
+                target_event_uid = String.valueOf(cursor.getInt(index));
+            }
+            switch (event_type){
+                case "1":
+
+                    break;
+                case "2":
+
+                    break;
+                default:
+            }
+
+
+        }
+
+    }
+
+
 
 
     private class A101KumanoTourokuListener implements View.OnClickListener {

@@ -92,13 +92,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         //eventテーブルの登録
         StringBuilder sb_parcel_event = new StringBuilder();
         sb_parcel_event.append("CREATE TABLE parcel_event(");
-        sb_parcel_event.append(" _id INTEGER PRIMARY KEY,");
+        sb_parcel_event.append(" uid INTEGER PRIMARY KEY,");
         sb_parcel_event.append(" created_at TEXT,");
         sb_parcel_event.append(" event_type INTEGER,");
         sb_parcel_event.append(" parcel_uid INTEGER,");
-        sb_parcel_event.append(" parcel_event_uid INTEGER,");
+        sb_parcel_event.append(" ryosei_uid INTEGER,");
         sb_parcel_event.append(" room_name TEXT,");
-        sb_parcel_event.append(" parcel_event_name TEXT,");
+        sb_parcel_event.append(" ryosei_name TEXT,");
         sb_parcel_event.append("target_event_uid INTEGER,");
         sb_parcel_event.append(" note TEXT,");
         sb_parcel_event.append(" is_finished INTEGER DEFAULT 0,");
@@ -305,11 +305,82 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(sql_insert_test_parcel);
 
         nimotsuCountAdder(db,owner_uid);
+        event_add_touroku(db,owner_uid,owner_room,owner_ryosei_name);
+    }
+
+    public void event_add_touroku(
+            SQLiteDatabase db,
+            String ryosei_id,
+            String room_name,
+            String ryosei_name){
+        StringBuilder sb_insert_Parcel = new StringBuilder();
+        sb_insert_Parcel.append("insert into parcel_event (" +
+                "created_at," +
+                "event_type," +
+                "parcel_uid," +
+                "ryosei_uid," +
+                "room_name," +
+                "ryosei_name" +
+                ") values (");
+
+        // 現在日時情報で初期化されたインスタンスの生成
+        Date dateObj = new Date();
+        SimpleDateFormat format = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
+        // 日時情報を指定フォーマットの文字列で取得
+        String string_register_time = format.format( dateObj );
+        sb_insert_Parcel.append( " \"" + string_register_time +"\",");
+        sb_insert_Parcel.append( " \"" + 1 +" \",");
+        Cursor cursor = db.rawQuery( "SELECT max(_id) as maxid  FROM parcels",null);
+        cursor.moveToFirst();
+        String maxid = String.valueOf(cursor.getInt(cursor.getColumnIndex("maxid")));
+        sb_insert_Parcel.append( " \"" + maxid +" \",");
+        sb_insert_Parcel.append( ryosei_id +",");
+        sb_insert_Parcel.append( " \"" + room_name +" \",");
+        sb_insert_Parcel.append( " \"" + ryosei_name +"\")");
+        String sql_insert_event = sb_insert_Parcel.toString();
+        db.execSQL(sql_insert_event);
+
+    }
+
+    public void event_add_uketori(
+            SQLiteDatabase db,
+            String ryosei_id,
+            String room_name,
+            String ryosei_name){
+        StringBuilder sb_insert_Parcel = new StringBuilder();
+        sb_insert_Parcel.append("insert into parcel_event (" +
+                "created_at," +
+                "event_type," +
+                "parcel_uid," +
+                "ryosei_uid," +
+                "room_name," +
+                "ryosei_name" +
+                ") values (");
+
+        // 現在日時情報で初期化されたインスタンスの生成
+        Date dateObj = new Date();
+        SimpleDateFormat format = new SimpleDateFormat( "yyyy/MM/dd HH:mm:ss" );
+        // 日時情報を指定フォーマットの文字列で取得
+        String string_register_time = format.format( dateObj );
+        sb_insert_Parcel.append( " \"" + string_register_time +"\",");
+        sb_insert_Parcel.append( " \"" + 2 +" \",");
+        Cursor cursor = db.rawQuery( "SELECT max(_id) as maxid  FROM parcels",null);
+        cursor.moveToFirst();
+        String maxid = String.valueOf(cursor.getInt(cursor.getColumnIndex("maxid")));
+        sb_insert_Parcel.append( " \"" + maxid +" \",");
+        sb_insert_Parcel.append( ryosei_id +",");
+        sb_insert_Parcel.append( " \"" + room_name +" \",");
+        sb_insert_Parcel.append( " \"" + ryosei_name +"\")");
+        String sql_insert_event = sb_insert_Parcel.toString();
+        db.execSQL(sql_insert_event);
+
     }
 
     public void receiveParcels(
             SQLiteDatabase db,
             String owner_id,
+            String owner_room,
+            String owner_ryosei_name,
             String parcels_uid,
             String release_staff_uid,
             String release_staff_room_name,
@@ -328,6 +399,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 " WHERE _id =" + parcels_uid;
         db.execSQL(sql);
         nimotsuCountSubber(db, owner_id);
+        event_add_uketori(db,owner_id,owner_room,owner_ryosei_name);
 
     }
 
